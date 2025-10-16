@@ -1,0 +1,162 @@
+# Общие системные файлы
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Резервные копии и временные файлы
+*.bak
+*.tmp
+*.temp
+*.backup
+
+# ========== C++ ==========
+# Скомпилированные объектные файлы
+*.o
+*.obj
+*.ko
+
+# Исполняемые файлы
+*.exe
+*.out
+*.app
+
+# Библиотеки
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# Файлы сборки (CMake, Make)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+build/
+Debug/
+Release/
+x64/
+x86/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Покрытие кода
+*.gcda
+*.gcno
+*.gcov
+
+# ========== Pascal ==========
+# Скомпилированные файлы
+*.ppu
+*.o
+*.or
+*.compiled
+
+# Исполняемые файлы
+*.exe
+*.app
+
+# Бинарные файлы Lazarus
+*.lps
+*.lpi
+*.lpr
+*.lpk
+*.lpl
+
+# Файлы состояния
+*.pp~
+*.pas~
+*.dfm~
+*.lfm~
+
+# ========== C# ==========
+# Файлы сборки и пакетов
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Файлы пакетов NuGet
+packages/
+*.nupkg
+
+# Результаты тестов
+TestResult.xml
+*.VisualState.xml
+
+# Файлы публикации
+publish/
+
+# ========== Python ==========
+# Байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Распределения и яйца
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Установщик pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Единицы тестирования
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Среды Jupyter
+.ipynb_checkpoints
+
+# Файлы окружения
+.env
+.venv
+env/
+venv/
+ENV/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# ========== Документация ==========
+docs/_build/
+
+# ========== Логи ==========
+*.log
+logs/
+
+# ========== Базы данных ==========
+*.db
+*.sqlite
+*.sqlite3
+
+# ========== Профили и настройки ==========
+*.userprefs
