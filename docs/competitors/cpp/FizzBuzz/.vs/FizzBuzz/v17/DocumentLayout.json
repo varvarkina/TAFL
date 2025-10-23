@@ -13,7 +13,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 182,
+          "DockedWidth": 200,
           "SelectedChildIndex": 32,
           "Children": [
             {
@@ -152,9 +152,9 @@
               "RelativeDocumentMoniker": "FizzBuzz.cpp",
               "ToolTip": "C:\\study\\TAFL\\docs\\competitors\\cpp\\FizzBuzz\\FizzBuzz.cpp",
               "RelativeToolTip": "FizzBuzz.cpp",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAAABUAAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-10-16T00:32:24.862Z",
+              "WhenOpened": "2025-10-22T22:49:27.248Z",
               "EditorCaption": ""
             }
           ]

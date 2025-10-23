@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 #include <windows.h>
 
@@ -7,21 +7,17 @@ int main()
     SetConsoleOutputCP(1251);
     std::string str;
 
-    std::cout << "Ââåäèòå ñòðîêó: ";
+    std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ ÑÑ‚Ñ€Ð¾ÐºÑƒ: ";
     std::getline(std::cin, str);
 
     if (str.empty())
     {
-        std::cout << "Îøèáêà: ñòðîêà íå ìîæåò áûòü ïóñòîé" << std::endl;
+        std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: ÑÑ‚Ñ€Ð¾ÐºÐ° Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð¿ÑƒÑÑ‚Ð¾Ð¹" << std::endl;
         return 1;
     }
 
-    std::cout << "Ïåðåâåðíóòàÿ ñòðîêà: ";
-    for (int i = str.length() - 1; i >= 0; --i)
-    {
-        std::cout << str[i];
-    }
-    std::cout << std::endl;
+    std::string reversed(str.rbegin(), str.rend());
+    std::cout << "ÐŸÐµÑ€ÐµÐ²ÐµÑ€Ð½ÑƒÑ‚Ð°Ñ ÑÑ‚Ñ€Ð¾ÐºÐ°: " << reversed << std::endl;
 
     return 0;
 }

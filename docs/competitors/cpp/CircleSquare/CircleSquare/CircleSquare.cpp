@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 #include <sstream>
 #include <numbers>
@@ -11,32 +11,32 @@ int main()
     std::string input;
     double radius;
 
-    std::cout << "Ââåäèòå ðàäèóñ êðóãà: ";
+    std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ€Ð°Ð´Ð¸ÑƒÑ ÐºÑ€ÑƒÐ³Ð°: ";
     std::getline(std::cin, input);
 
     if (input.empty())
     {
-        std::cout << "Îøèáêà: ïóñòîé ââîä" << std::endl;
+        std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: Ð¿ÑƒÑÑ‚Ð¾Ð¹ Ð²Ð²Ð¾Ð´" << std::endl;
         return 1;
     }
 
     std::stringstream ss(input);
     if (!(ss >> radius) || !(ss.eof()))
     {
-        std::cout << "Îøèáêà: íåêîððåêòíûé ââîä. Âîçìîæíî ââåäåíû íå÷èñëîâûå ñèìâîëû" << std::endl;
+        std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: Ð½ÐµÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ñ‹Ð¹ Ð²Ð²Ð¾Ð´. Ð’Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ Ð²Ð²ÐµÐ´ÐµÐ½Ñ‹ Ð½ÐµÑ‡Ð¸ÑÐ»Ð¾Ð²Ñ‹Ðµ ÑÐ¸Ð¼Ð²Ð¾Ð»Ñ‹" << std::endl;
         return 1;
     }
 
     if (radius <= 0)
     {
-        std::cout << "Îøèáêà: ðàäèóñ äîëæåí áûòü ïîëîæèòåëüíûì" << std::endl;
+        std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: Ñ€Ð°Ð´Ð¸ÑƒÑ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð±Ñ‹Ñ‚ÑŒ Ð¿Ð¾Ð»Ð¾Ð¶Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ð¼" << std::endl;
         return 1;
     }
 
     double area = std::numbers::pi * radius * radius;
     std::cout.setf(std::ios::fixed);
     std::cout.precision(4);
-    std::cout << "Ïëîùàäü êðóãà = " << area << std::endl;
+    std::cout << "ÐŸÐ»Ð¾Ñ‰Ð°Ð´ÑŒ ÐºÑ€ÑƒÐ³Ð° = " << area << std::endl;
 
     return 0;
 }

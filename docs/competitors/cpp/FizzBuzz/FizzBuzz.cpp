@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <string>
 #include <sstream>
 #include <windows.h>
@@ -7,14 +7,14 @@ int main()
 {
     SetConsoleOutputCP(1251);
     std::string input;
-    std::cout << "Ââåäèòå öåëîå ÷èñëî:" << std::endl;
+    std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ†ÐµÐ»Ð¾Ðµ Ñ‡Ð¸ÑÐ»Ð¾:" << std::endl;
 
     while (std::getline(std::cin, input))
     {      
         if (input.empty())
         {
-            std::cout << "Îøèáêà: ïóñòîé ââîä" << std::endl;
-            std::cout << "Ââåäèòå öåëîå ÷èñëî:" << std::endl;
+            std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: Ð¿ÑƒÑÑ‚Ð¾Ð¹ Ð²Ð²Ð¾Ð´" << std::endl;
+            std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ†ÐµÐ»Ð¾Ðµ Ñ‡Ð¸ÑÐ»Ð¾:" << std::endl;
             continue;
         }
 
@@ -23,8 +23,8 @@ int main()
 
         if (!(ss >> num) || !(ss.eof()))
         {
-            std::cout << "Îøèáêà: íåêîððåêòíûé ââîä. Âîçìîæíî ââåäåíû íå÷èñëîâûå ñèìâîëû" << std::endl;
-            std::cout << "Ââåäèòå öåëîå ÷èñëî:" << std::endl;
+            std::cout << "ÐžÑˆÐ¸Ð±ÐºÐ°: Ð½ÐµÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ñ‹Ð¹ Ð²Ð²Ð¾Ð´. Ð’Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ Ð²Ð²ÐµÐ´ÐµÐ½Ñ‹ Ð½ÐµÑ‡Ð¸ÑÐ»Ð¾Ð²Ñ‹Ðµ ÑÐ¸Ð¼Ð²Ð¾Ð»Ñ‹" << std::endl;
+            std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ†ÐµÐ»Ð¾Ðµ Ñ‡Ð¸ÑÐ»Ð¾:" << std::endl;
             continue;
         }
 
@@ -44,7 +44,7 @@ int main()
         {
             std::cout << num << std::endl;
         }
-        std::cout << "Ââåäèòå öåëîå ÷èñëî:" << std::endl;
+        std::cout << "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ†ÐµÐ»Ð¾Ðµ Ñ‡Ð¸ÑÐ»Ð¾:" << std::endl;
     }
 
     return 0;
