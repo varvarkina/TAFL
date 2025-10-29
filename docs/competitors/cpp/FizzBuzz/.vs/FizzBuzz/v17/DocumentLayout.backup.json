@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\study\\TAFL\\docs\\competitors\\cpp\\FizzBuzz\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{4A9BCE34-5397-40EE-91AD-19B074E894D0}|FizzBuzz.vcxproj|C:\\study\\TAFL\\docs\\competitors\\cpp\\FizzBuzz\\FizzBuzz.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{4A9BCE34-5397-40EE-91AD-19B074E894D0}|FizzBuzz.vcxproj|solutionrelative:FizzBuzz.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 32,
           "Children": [
             {
               "$type": "Bookmark",
@@ -138,6 +143,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:133:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "FizzBuzz.cpp",
+              "DocumentMoniker": "C:\\study\\TAFL\\docs\\competitors\\cpp\\FizzBuzz\\FizzBuzz.cpp",
+              "RelativeDocumentMoniker": "FizzBuzz.cpp",
+              "ToolTip": "C:\\study\\TAFL\\docs\\competitors\\cpp\\FizzBuzz\\FizzBuzz.cpp",
+              "RelativeToolTip": "FizzBuzz.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-10-22T22:49:27.248Z",
+              "EditorCaption": ""
             }
           ]
         },
