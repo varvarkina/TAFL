@@ -1,0 +1,23 @@
+# IDE settings
+/.vscode/
+/.idea/
+*.sln.DotSettings.user
+/.vs/
+
+# Build results
+/src/*/bin/
+/src/*/obj/
+/tests/*/bin/
+/tests/*/obj/
+
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Sandbox directory
+sandbox/
