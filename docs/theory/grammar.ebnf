@@ -1,0 +1,54 @@
+identifier = identifier_start , { identifier_part } ;
+identifier_start = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+                 | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+                 | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+                 | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+                 | '_' ;
+identifier_part = identifier_start | digit ;
+
+digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
+
+nonzero_digit = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
+zero = '0' ;
+
+decimal_literal = nonzero_digit , { digit } ;
+octal_literal = '0' , { '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' } ;
+hex_digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+          | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+          | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' ;
+hex_literal = ( '0x' | '0X' ) , { hex_digit } ;
+binary_literal = ( '0b' | '0B' ) , { '0' | '1' } ;
+
+integer_literal = decimal_literal | zero | octal_literal | hex_literal | binary_literal ;
+integer_suffix = 'u' | 'U' | 'l' | 'L' | 'll' | 'LL' ;
+
+digit_seq = digit , { digit } ;
+
+fractional_constant = digit_seq , '.' , { digit } | '.' , digit_seq ;
+exponent_part = ( 'e' | 'E' ) , [ '+' | '-' ] , digit_seq ;
+floating_suffix = 'f' | 'F' | 'l' | 'L' ;
+
+floating_literal =
+    fractional_constant , [ exponent_part ] , [ floating_suffix ]
+  | digit_seq , exponent_part , [ floating_suffix ] ;
+
+printable_basic = ' ' | '!' | '#' | '$' | '%' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | '-' | '.' | '/'
+                | ':' | ';' | '<' | '=' | '>' | '?' | '@' | '[' | ']' | '^' | '_' | '`' | '{' | '|' | '}' | '~'
+                | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+                | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+                | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+                | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+                | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
+
+string_char = printable_basic ;
+ordinary_string_literal = '"' , { string_char } , '"' ;
+string_literal = ordinary_string_literal ;
+
+raw_delim_char = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+               | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+               | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+               | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+               | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '_' | '#' | '$' | '%' | '&' | '+' | '-' | '.' | ':' | ';' | '<' | '=' | '>' ;
+raw_delim = { raw_delim_char } ;
+raw_chars = { string_char } ;
+raw_string_literal = 'R' , '"' , raw_delim , '(' , raw_chars , ')' , raw_delim , '"' ;

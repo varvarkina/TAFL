@@ -64,7 +64,7 @@
 
 ## Пример кода
 
-```
+```c++
 #include <iostream>
 
 int main() 

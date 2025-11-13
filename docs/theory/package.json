@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "build": "npx ebnf2railroad --title \"Синтаксические диаграммы\" --lint grammar.ebnf"
+  },
+  "dependencies": {
+    "ebnf2railroad": "^1.14.1"
+  }
+}
