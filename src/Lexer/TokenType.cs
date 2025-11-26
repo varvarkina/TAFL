@@ -129,22 +129,22 @@ public enum TokenType
     Equal,
 
     /// <summary>
-    /// Оператор меньше или равно (&lt;=)
+    /// Оператор меньше или равно (<=)
     /// </summary>
     LessOrEqual,
 
     /// <summary>
-    /// Оператор больше или равно (&gt;=)
+    /// Оператор больше или равно (>=)
     /// </summary>
     GreaterOrEqual,
 
     /// <summary>
-    /// Оператор меньше (&lt;)
+    /// Оператор меньше (<)
     /// </summary>
     Less,
 
     /// <summary>
-    /// Оператор больше (&gt;)
+    /// Оператор больше (>) 
     /// </summary>
     Greater,
 
@@ -179,17 +179,17 @@ public enum TokenType
     Plus,
 
     /// <summary>
-    /// Логическое И (&amp;&amp;)
+    /// Логическое И
     /// </summary>
     And,
 
     /// <summary>
-    /// Логическое ИЛИ (||)
+    /// Логическое ИЛИ
     /// </summary>
     Or,
 
     /// <summary>
-    /// Логическое НЕ (!)
+    /// Логическое НЕ
     /// </summary>
     Not,
 

@@ -37,6 +37,9 @@ public class Lexer
 
     /// <summary>
     ///  Распознаёт следующий токен.
+    ///  Дополнительные правила:
+    ///   1) Если ввод закончился, то возвращаем токен EndOfFile
+    ///   2) Пробельные символы пропускаются
     /// </summary>
     public Token ParseToken()
     {
@@ -182,13 +185,13 @@ public class Lexer
             _scanner.Advance();
         }
 
-        // Проверяем на совпадение с ключевым словом (регистронезависимо)
+        // Проверяем на совпадение с ключевым словом
         if (Keywords.TryGetValue(value, out TokenType type))
         {
             return new Token(type);
         }
 
-        // Возвращаем токен идентификатора (регистрозависимо)
+        // Возвращаем токен идентификатора
         return new Token(TokenType.Identifier, new TokenValue(value));
     }
 
@@ -227,14 +230,6 @@ public class Lexer
         }
         else
         {
-            // Целое число
-            // Проверка на ведущий ноль (разрешен только если число равно 0)
-            if (numberStr.Length > 1 && numberStr.StartsWith('0'))
-            {
-                 // Это может быть ошибкой по спецификации, но пока вернем как число
-                 // Или можно вернуть Error
-            }
-
             if (decimal.TryParse(numberStr, out decimal intVal))
             {
                 return new Token(TokenType.IntegerLiteral, new TokenValue(intVal));
