@@ -1,145 +1,118 @@
-# EBNF для лексем C++
+# EBNF for C++ lexemes
 
-**Язык:** C++ (современная подсмножество; ориентир — синтаксис лексем, совместимый с C++11/C++14/C++17 и новее)
+**Язык:** C++ (описание лексем для лабораторной работы)
 
-**Описанные лексемы:**
+**Описываемые лексемы:** `identifier`, `integer number`, `real number`, `string literal` (ordinary и raw).
 
-* идентификатор (identifier)
-* литералы целых чисел (integer number)
-* литералы чисел с плавающей точкой (real number / floating literal)
-* строковые литералы (string literal) — обычные и raw-строки
+(* Диалект: ISO/IEC 14977. Терминалы в двойных кавычках. Комментарии — в скобках (* ... *) *)
 
 ---
+```EBNF
+space = ' ' ;
+horizontal_tab = '\t' ;
+vertical_tab = '\v' ;
+form_feed = '\f' ;
+newline = '\n' ;
+whitespace = space | horizontal_tab | vertical_tab | form_feed | newline ;
 
-## Условные соглашения EBNF
+letter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K'
+       | 'L' | 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V'
+       | 'W' | 'X' | 'Y' | 'Z'
+       | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k'
+       | 'l' | 'm' | 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v'
+       | 'w' | 'x' | 'y' | 'z' ;
 
-В этой записи используются стандартные расширения EBNF:
+digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
 
-* `::=` — определение нетерминала
-* `|` — альтернатива (или)
-* `[...]` — опциональная часть (0 или 1 раз)
-* `{...}` — повторение (0 или более раз)
-* `(...)` — группировка
-* Терминалы заключены в одинарные кавычки, например `'a'`, или в двойные кавычки для наглядности; при необходимости используется описание класса символов.
-* Символ `'` (апостроф, одиночная кавычка) влево не экранируется внутри терминала — при необходимости используется двойные кавычки.
+punct = '{' | '}' | '[' | ']' | '#' | '(' | ')' | '<' | '>' | '%' | ':'
+      | ';' | '.' | '?' | '*' | '+' | '-' | '/' | '^' | '&' | '|' | '~'
+      | '!' | '=' | ',' | '$' | '@' | '`' | "'" ;
 
-> Примечание: реальная спецификация C++ гораздо сложнее (поддержка юникод-идентификаторов, подробные правила суффиксов и пр.). Здесь приведено компактное и практическое EBNF-описание, пригодное для учебных лексеров и большинства реализаций, с учётом современных расширений (разделители цифр `'`).
+BACKSLASH = '\\' ;
+DQUOTE = '"' ;
 
----
+basic_graphic = letter | digit | '_' | punct ; // видимые символы
+basic_source_character = whitespace | basic_graphic | BACKSLASH | DQUOTE ; // все символы
 
-## Грамматика лексем (EBNF)
+identifier = identifier_start , { identifier_part } ;
+identifier_start = letter | '_' ;
+identifier_part  = letter | digit | '_' ;
 
-```ebnf
-(* --- Идентификатор --- *)
-identifier ::= identifier-start { identifier-part } ;
-identifier-start ::= letter | '_' ;
-identifier-part  ::= letter | digit | '_' ;
+zero = '0' ;
+nonzero_digit = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' ;
 
-letter ::= 'A'..'Z' | 'a'..'z' ;
-digit  ::= '0'..'9' ;
+decimal_literal = nonzero_digit , { digit } ; //десятичные числа
 
-(* --- Разделитель цифр (C++14 и новее) --- *)
-sep ::= "'" ; (* одинарная кавычка между цифрами *)
+octal_digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' ; //какие числа в этой системе, снизу то, как пишется для компилятора
 
-digit-seq ::= digit { [sep] digit } ;
-hex-digit   ::= '0'..'9' | 'A'..'F' | 'a'..'f' ;
-hex-seq     ::= hex-digit { [sep] hex-digit } ;
-bin-digit   ::= '0' | '1' ;
-bin-seq     ::= bin-digit { [sep] bin-digit } ;
-oct-digit   ::= '0'..'7' ;
-oct-seq     ::= oct-digit { [sep] oct-digit } ;
+octal_literal = '0' , octal_digit , { octal_digit } ; //восьмеричные числа (начинаются с 0)
 
-(* --- Суффиксы целых чисел --- *)
-integer-suffix ::= [ unsigned-suffix ] [ long-suffix ] ;
-unsigned-suffix ::= 'u' | 'U' ;
-long-suffix ::= 'l' | 'L' | 'll' | 'LL' ;
+hex_digit = digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
+            | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ;
 
-(* Популярный упрощённый вариант, допускающий сочетания в любом порядке: *)
-integer-suffix-alt ::= { 'u' | 'U' } { 'l' | 'L' } [ 'l' | 'L' ] ;
+hex_literal = ( '0x' | '0X' ) , hex_digit , { hex_digit } ; //шестнадцатеричные числа (0x или 0X).
 
-(* --- Литералы целых чисел --- *)
-integer-literal ::= decimal-literal | octal-literal | hex-literal | binary-literal ;
+binary_digit = '0' | '1' ;
+binary_literal = ( '0b' | '0B' ) , binary_digit , { binary_digit } ; //бинарные числа (0b или 0B).
 
-decimal-literal ::= nonzero-digit { [sep] digit } [ integer-suffix ]
-                   | '0' [ integer-suffix ] ;
-nonzero-digit ::= '1'..'9' ;
+integer_literal = decimal_literal | zero | octal_literal | hex_literal | binary_literal ;
 
-octal-literal ::= '0' { [sep] oct-digit } [ integer-suffix ] ;
+integer_suffix = ( 'u' | 'U' ) , [ 'l' | 'L' | 'll' | 'LL' ]
+               | ( 'l' | 'L' | 'll' | 'LL' ) , [ 'u' | 'U' ] ;
 
-hex-literal ::= ( '0x' | '0X' ) hex-seq [ integer-suffix ] ;
+digit_seq = digit , { digit } ;
 
-binary-literal ::= ( '0b' | '0B' ) bin-seq [ integer-suffix ] ;
+fractional_constant = digit_seq , '.' , { digit } //десятичная дробь с точкой
+                    | '.' , digit_seq ;
 
-(* --- Суффиксы для вещественных литералов --- *)
-floating-suffix ::= 'f' | 'F' | 'l' | 'L' ;
+exponent_part = ( 'e' | 'E' ) , [ '+' | '-' ] , digit_seq ;
 
-(* --- Экспонента --- *)
-exponent-part ::= ( 'e' | 'E' | 'p' | 'P' ) [ '+' | '-' ] digit-seq ;
-(* примечание: 'p'/'P' используется для hex floating-point literals (C++17) *)
+floating_suffix = 'f' | 'F' | 'l' | 'L' ;
 
-(* --- Вещественные литералы (floating literals) --- *)
-floating-literal ::= fractional-constant [ exponent-part ] [ floating-suffix ]
-                   | digit-seq exponent-part [ floating-suffix ]
-                   | hex-floating-literal ;
+decimal_floating_literal = fractional_constant , [ exponent_part ] , [ floating_suffix ] //десятичные вещественные числа с возможной экспонентой и суффиксом (f или l).
+                         | digit_seq , exponent_part , [ floating_suffix ] ;
 
-fractional-constant ::= digit-seq '.' [ digit-seq ]
-                      | '.' digit-seq ;
+hex_digit_seq = hex_digit , { hex_digit } ;
 
-hex-floating-literal ::= ( '0x' | '0X' ) hex-seq [ '.' [ hex-seq ] ] [ exponent-part ] [ floating-suffix ]
-                       | ( '0x' | '0X' ) '.' hex-seq [ exponent-part ] [ floating-suffix ] ;
+hex_fraction = hex_digit_seq , '.' , { hex_digit }
+             | '.' , hex_digit_seq
+             | hex_digit_seq ;
 
-(* --- Строковые литералы --- *)
-string-literal ::= ordinary-string-literal | raw-string-literal ;
+hex_exponent = ( 'p' | 'P' ) , [ '+' | '-' ] , digit_seq ;
 
-ordinary-string-literal ::= '"' { string-chunk } '"' [ string-suffix ] ;
-string-chunk ::= { string-char } ;
-string-char ::= any-char-except-quote-or-backslash | escape-sequence ;
+hex_floating_literal = ( '0x' | '0X' ) , hex_fraction , hex_exponent , [ floating_suffix ] ; //числа с плавающей точкой в шестнадцатеричной форме (например, 0x1.2p3).
 
-escape-sequence ::= '\\' ( simple-escape | octal-escape | hex-escape | universal-escape ) ;
-simple-escape ::= 'a' | 'b' | 'f' | 'n' | 'r' | 't' | 'v' | '\\' | '\'' | '"' | '?' ;
+real_literal = decimal_floating_literal //вещественные
+             | hex_floating_literal ;
 
-octal-escape ::= oct-digit { oct-digit } ;
-hex-escape ::= 'x' hex-seq ;
-universal-escape ::= 'u' hex-digit hex-digit hex-digit hex-digit
-                    | 'U' hex-digit hex-digit hex-digit hex-digit hex-digit hex-digit hex-digit hex-digit ;
+simple_escape = BACKSLASH , ( "'" | DQUOTE | "?" | BACKSLASH | "a" | "b" | "f"
+              | "n" | "r" | "t" | "v" ) ;
 
-string-suffix ::= /* для обычных литералов в C++ — суффиксы типа u8, u, U, L */
-                  [ 'u8' | 'u' | 'U' | 'L' ] ;
+octal_escape = BACKSLASH , octal_digit , [ octal_digit , [ octal_digit ] ] ;
 
-(* --- Raw string literal --- *)
-raw-string-literal ::= 'R' '"' raw-delim '(' raw-chars ')' raw-delim '"' ;
-raw-delim ::= { raw-char } ;
-raw-char ::= any-character-except-space-paren-backslash-quote ;
-raw-chars ::= { any-character } ;
+hex_escape = BACKSLASH , 'x' , hex_digit , { hex_digit } ;
 
-(* Ограничения на разделитель в raw-строке: в стандарте длина разделителя ограничена (обычно <= 16),
-   но здесь даётся свободная форма; при реализации лексера стоит реализовать проверку длины и допустимых символов. *)
+universal_escape = BACKSLASH , 'u' , hex_digit , hex_digit , hex_digit , hex_digit
+                 | BACKSLASH , 'U' , hex_digit , hex_digit , hex_digit , hex_digit ,
+                 hex_digit , hex_digit , hex_digit , hex_digit ;
 
-```
+escape_sequence = simple_escape | octal_escape | hex_escape | universal_escape ;
 
----
+non_quote_non_backslash = letter | digit | "_" | punct                  // любые символы, кроме кавычки и обратного слэша.
+                        | space | horizontal_tab | vertical_tab | form_feed ;
 
-## Пояснения и рекомендации для реализации
+string_char = non_quote_non_backslash | escape_sequence ; //символ строки, может быть escape-последовательностью
 
-1. **Юникод и универсальные имена.** В стандарте C++ идентификаторы могут содержать символы из набора универсальных имён и многих классов Unicode. Для большинства учебных и практических лексеров достаточно поддержать ASCII-идентификаторы (`A-Z`, `a-z`, `_`, `0-9`) и при необходимости расширить правило `letter`/`identifier-part` до Unicode-категорий.
+ordinary_string_literal = DQUOTE , { string_char } , DQUOTE ; // обычная строка в кавычках
 
-2. **Разделитель цифр `'`.** В EBNF введён термин `sep` как одиночная кавычка между цифрами. При реальном лексическом анализе нужно запретить разделитель в начале или конце числа и два разделителя подряд.
+raw_delim_char = letter | digit | '_' | '#' | '$' | '%' | '&'
+               | '+' | '-' | '.' | ':' | ';' | '<' | '=' | '>' ;
 
-3. **Суффиксы.** Суффиксы целых и вещественных литералов в стандарте допускают сложные комбинации (`u`, `U`, `l`, `L`, `ll`, `LL`, `f`, `F`, `L`). В грамматике дана облегчённая, но практичная их модель; при строгой совместимости следует реализовать перечисление допустимых комбинаций и порядок.
+raw_delim = { raw_delim_char } ;
 
-4. **Raw-строки.** Синтаксис raw-литералов в стандарте: `R"delim(chars)delim"` — где `delim` — ограничитель длиной до 16 символов, не содержащий пробелов, скобок или кавычек. При реализации нужно проверять совпадение ограничителя в конце.
+raw_chars = { basic_source_character } ;
 
-5. **Hex floating-point.** Для hex-floating использован схожий с стандартом подход: префикс `0x`/`0X`, шестнадцатеричная мантисса и экспонента с `p`/`P`.
+raw_string_literal = 'R' , DQUOTE , raw_delim , '(' , raw_chars , ')' , raw_delim , DQUOTE ;
 
-6. **Точность EBNF и практичность.** Данный EBNF предназначен для учебных и большинства практических лексеров. Для полностью корректной реализации строго по стандарту C++ следует свериться с последним текстом стандарта (ISO C++17/C++20/C++23) и учесть дополнительные детали (конкатенация строковых литералов, префиксированные строковые литералы, грамматика char-литералов и пр.).
+string_literal = ordinary_string_literal | raw_string_literal ;
 
----
-
-Если нужно, могу:
-
-* добавить полную EBNF-грамматику синтаксиса (высокоуровневую) для подмножества C++ (функции, объявления, выражения),
-* расширить поддержку Unicode-идентификаторов и точные правила суффиксов согласно конкретной версии стандарта (укажите, какую),
-* подготовить тестовый набор лексем и небольшую реализацию лексера на выбранном языке (например, Python или Rust).
-
-```
-```
