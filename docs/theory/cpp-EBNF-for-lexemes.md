@@ -1,13 +1,16 @@
-# EBNF for C++ lexemes
+# EBNF-грамматика лексем для языка C++
 
-**Язык:** C++ (описание лексем для лабораторной работы)
+**Язык:** C++ (грамматика ориентирована на формы лексем, описанные в стандартах C++).  
+**Описываемые лексемы:**
+- `identifier` — идентификаторы (имена переменных, функций и т.д.)
+- `integer literal` — литералы целых чисел (decimal, octal, hex, binary; с суффиксами `u`, `l`, `ll` и т.д.)
+- `real literal` — литералы чисел с плавающей точкой (десятичные и шестнадцатеричные с плавающей точкой)
+- `string literal` — строковые литералы (обычные `"`...`"` и сырой `R"delim(... )delim"`)
 
-**Описываемые лексемы:** `identifier`, `integer number`, `real number`, `string literal` (ordinary и raw).
-
-(* Диалект: ISO/IEC 14977. Терминалы в двойных кавычках. Комментарии — в скобках (* ... *) *)
+**Примечание.** Нотация EBNF: `{ }` — повтор (0..∞), `[ ]` — опционально (0..1), `( )` — группировка, `|` — альтернатива.
 
 ---
-```EBNF
+```ebnf
 space = ' ' ;
 horizontal_tab = '\t' ;
 vertical_tab = '\v' ;
@@ -28,7 +31,7 @@ punct = '{' | '}' | '[' | ']' | '#' | '(' | ')' | '<' | '>' | '%' | ':'
       | ';' | '.' | '?' | '*' | '+' | '-' | '/' | '^' | '&' | '|' | '~'
       | '!' | '=' | ',' | '$' | '@' | '`' | "'" ;
 
-BACKSLASH = '\\' ;
+BACKSLASH = '\' ;
 DQUOTE = '"' ;
 
 basic_graphic = letter | digit | '_' | punct ; // видимые символы
@@ -115,4 +118,4 @@ raw_chars = { basic_source_character } ;
 raw_string_literal = 'R' , DQUOTE , raw_delim , '(' , raw_chars , ')' , raw_delim , DQUOTE ;
 
 string_literal = ordinary_string_literal | raw_string_literal ;
-
+```
