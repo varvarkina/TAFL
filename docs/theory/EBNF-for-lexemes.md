@@ -1,3 +1,16 @@
+# EBNF Грамматика лексем языка Extended Pascal
+
+**Язык:** Extended Pascal (ISO/IEC 10206:1990)
+
+**Охватываемые типы лексем:**
+- Идентификаторы (identifiers)
+- Литералы целых чисел (integer literals)
+- Литералы чисел с плавающей точкой (real/floating-point literals)
+- Литералы строк (string literals)
+
+---
+
+```ebnf
 letter =
     "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
   | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
@@ -81,3 +94,5 @@ string_literal = character_string ;
 
 number_literal = integer_literal | real_literal ;
 lexeme = identifier | number_literal | string_literal ;
+
+```
