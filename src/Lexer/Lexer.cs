@@ -108,6 +108,9 @@ public class Lexer
             case '%':
                 _scanner.Advance();
                 return new Token(TokenType.Modulo);
+            case '^':
+                _scanner.Advance();
+                return new Token(TokenType.Power);
             case '/':
                 _scanner.Advance();
                 if (_scanner.Peek() == '/')
