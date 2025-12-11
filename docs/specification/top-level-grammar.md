@@ -53,10 +53,10 @@ print(a + 5);
 ## 3. Грамматика в нотации EBNF
 ```
 (* Программа находится в одном файле *)
-program = top_level_statement, { top_level_statement } ;
+program = top_level_statement, { top_level_statement }, end_of_file ;
 
 (* Верхнеуровневая инструкция *)
-top_level_statement = statement , ";" ;
+top_level_statement = statement, ";" ;
 
 (* Инструкции *)
 statement =
