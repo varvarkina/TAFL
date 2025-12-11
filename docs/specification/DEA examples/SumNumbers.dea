@@ -1,0 +1,6 @@
+var a;
+input(a);
+var b;
+input(b);
+var sum = a + b;
+print(sum);

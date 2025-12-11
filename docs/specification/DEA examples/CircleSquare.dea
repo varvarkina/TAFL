@@ -1,0 +1,5 @@
+const PI = 3.14159265359;
+var r;
+input(r);
+var area = PI * r ^ 2;
+print(area);
