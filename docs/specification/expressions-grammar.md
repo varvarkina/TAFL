@@ -91,7 +91,7 @@ equality = comparison, { ( "==" | "!=" ), comparison } ;
 (* Операторы сравнения *)
 comparison = additive, { ( "<" | "<=" | ">" | ">=" ), additive } ;
 
-(* Аддитивные операции: +, - (также конкатенация строк через +) *)
+(* Аддитивные операции: +, - *)
 additive = multiplicative, { ( "+" | "-" ), multiplicative } ;
 
 (* Мультипликативные операции: *, /, //, % *)
@@ -106,14 +106,14 @@ unary = "+" , unary
       | "!" , unary
       | primary ;
 
-(* Первичные выражения — числа, идентификаторы или подвыражения в скобках *)
+(* Первичные выражения — числа, идентификаторы, функции или подвыражения в скобках *)
 primary = number 
         | identifier 
-        | function_call 
+        | function_call_expression  
         | "(", expression, ")" ;
 
 (* Вызовы функций *)
-function_call = function_name, "(", [ argument_list ], ")" ;
+function_call_expression = function_name, "(", [ argument_list ], ")" ;
 
 (* Имена встроенных функций *)
 function_name = "abs"| "min"| "max";   
