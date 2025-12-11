@@ -1,6 +1,6 @@
 # EBNF Грамматика лексем языка Extended Pascal
 
-**Язык:** Extended Pascal (ISO/IEC 10206:1990)
+**Язык:** Extended Pascal (ISO/IEC 10206)
 
 **Охватываемые типы лексем:**
 - Идентификаторы (identifiers)
@@ -54,7 +54,7 @@ short_unsigned_real = digit_sequence, ".", [ exponent_part ]
 signed_real = [ sign ], ( unsigned_real | short_unsigned_real ) ;
 real_literal = signed_real ;
 
-(* ========== STRING ========== *)
+(* ========== STRING ========== *)  
 
 apostrophe = "'" ;
 apostrophe_pair = "''" ;
