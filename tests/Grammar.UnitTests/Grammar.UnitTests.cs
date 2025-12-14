@@ -106,6 +106,11 @@ public sealed class GrammarValidatorTests
         "min(10, 20) * 2",
         "max(1, 2, 3) ^ 2",
         "(1 + 2) * abs(-3)",
+
+        //вызовы функций (пустые аргументы / дырка)
+        "abs()",
+        "min()",
+        "max()",
     };
 
     public static TheoryData<string> Invalid() => new()
@@ -123,11 +128,10 @@ public sealed class GrammarValidatorTests
         "\"test\" * 2",
         "\"abc\" / 3",
 
-        // Ошибочные вызовы функций (пустые аргументы / дырка)
-        "abs()",
-        "min()",
-        "max()",
+        // Ошибочные вызовы функций (дырка)
         "min(1, )",
+        "max(, 1)",
+        "abs(,)",
     };
 
     [Theory]
