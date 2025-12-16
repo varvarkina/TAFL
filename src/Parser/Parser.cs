@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using Lexer;
+using Execution;
 
 namespace Parser;
 
@@ -8,368 +11,554 @@ namespace Parser;
 /// </summary>
 public class Parser
 {
-	private readonly TokenStream _tokens;
+    private readonly TokenStream _tokens;
+    private readonly IEnvironment _environment;
+    private readonly Dictionary<string, object> _symbols = new();
 
-	private Parser(string code)
-	{
-		_tokens = new TokenStream(code);
-	}
+    public Parser(string code, IEnvironment environment)
+    {
+        _tokens = new TokenStream(code);
+        _environment = environment;
+    }
 
-	/// <summary>
-	/// Выполняет разбор выражения и возвращает результат.
-	/// </summary>
-	public static Row EvaluateExpression(string code)
-	{
-		Parser p = new(code);
-		object result = p.ParseExpression();
-		return new Row(result);
-	}
+    // Private constructor for EvaluateExpression (legacy support)
+    private Parser(string code) : this(code, new FakeEnvironment())
+    {
+    }
 
-	/// <summary>
-	/// Разбирает выражение.
-	/// Правила: expression = logical_or ;
-	/// </summary>
-	private object ParseExpression()
-	{
-		return ParseLogicalOr();
-	}
+    /// <summary>
+    /// Выполняет разбор выражения и возвращает результат.
+    /// </summary>
+    public static Row EvaluateExpression(string code)
+    {
+        Parser p = new(code);
+        object result = p.ParseExpression();
+        return new Row(result);
+    }
 
-	/// <summary>
-	/// Разбирает логическое ИЛИ выражение.
-	/// Правила: logical_or = logical_and, { "||", logical_and } ;
-	/// </summary>
-	private object ParseLogicalOr()
-	{
-		object left = ParseLogicalAnd();
+    public void ParseProgram()
+    {
+        while (_tokens.Peek().Type != TokenType.EndOfFile)
+        {
+            ParseStatement();
+        }
+    }
 
-		while (_tokens.Peek().Type == TokenType.Or)
-		{
-			_tokens.Advance();
-			object right = ParseLogicalAnd();
+    private void ParseStatement()
+    {
+        Token token = _tokens.Peek();
+        switch (token.Type)
+        {
+            case TokenType.Var:
+                ParseVarDef();
+                break;
+            case TokenType.Const:
+                ParseConstDef();
+                break;
+            case TokenType.Input:
+                ParseInput();
+                break;
+            case TokenType.Print:
+                ParsePrint();
+                break;
+            case TokenType.OpenBrace:
+                ParseBlock();
+                break;
+            case TokenType.Identifier:
+                ParseIdentifierStatement();
+                break;
+            case TokenType.Semicolon:
+                _tokens.Advance(); // Empty statement
+                break;
+            default:
+                ParseExpression();
+                Match(TokenType.Semicolon);
+                break;
+        }
+    }
 
-			bool leftBool = Convert.ToBoolean(left);
-			bool rightBool = Convert.ToBoolean(right);
-			left = leftBool || rightBool;
-		}
+    private void ParseVarDef()
+    {
+        Match(TokenType.Var);
+        Token identifier = _tokens.Peek();
+        Match(TokenType.Identifier);
+        
+        object value = 0m;
+        if (_tokens.Peek().Type == TokenType.Assign)
+        {
+            Match(TokenType.Assign);
+            value = ParseExpression();
+        }
+        
+        Match(TokenType.Semicolon);
 
-		return left;
-	}
+        _symbols[identifier.Value!.ToString()!] = value;
+    }
 
-	/// <summary>
-	/// Разбирает логическое И выражение.
-	/// Правила: logical_and = equality, { "&&", equality } ;
-	/// </summary>
-	private object ParseLogicalAnd()
-	{
-		object left = ParseEquality();
+    private void ParseConstDef()
+    {
+        Match(TokenType.Const);
+        Token identifier = _tokens.Peek();
+        Match(TokenType.Identifier);
+        Match(TokenType.Assign);
+        object value = ParseExpression();
+        Match(TokenType.Semicolon);
 
-		while (_tokens.Peek().Type == TokenType.And)
-		{
-			_tokens.Advance();
-			object right = ParseEquality();
+        _symbols[identifier.Value!.ToString()!] = value;
+    }
 
-			bool leftBool = Convert.ToBoolean(left);
-			bool rightBool = Convert.ToBoolean(right);
-			left = leftBool && rightBool;
-		}
+    private void ParseInput()
+    {
+        Match(TokenType.Input);
+        Match(TokenType.OpenParenthesis);
+        Token identifier = _tokens.Peek();
+        Match(TokenType.Identifier);
+        Match(TokenType.CloseParenthesis);
+        Match(TokenType.Semicolon);
 
-		return left;
-	}
+        object input = _environment.ReadInput();
+        decimal val = Convert.ToDecimal(input);
+        _symbols[identifier.Value!.ToString()!] = val;
+    }
 
-	/// <summary>
-	/// Разбирает выражение равенства/неравенства.
-	/// Правила: equality = comparison, { ( "==" | "!=" ), comparison } ;
-	/// </summary>
-	private object ParseEquality()
-	{
-		object left = ParseComparison();
+    private void ParsePrint()
+    {
+        Match(TokenType.Print);
+        Match(TokenType.OpenParenthesis);
+        
+        if (_tokens.Peek().Type != TokenType.CloseParenthesis)
+        {
+            do
+            {
+                object value = ParseExpression();
+                _environment.AddResult(Convert.ToDouble(value));
+            } while (_tokens.Peek().Type == TokenType.Comma && ContinueReadingArguments());
+        }
 
-		while (_tokens.Peek().Type == TokenType.Equal || _tokens.Peek().Type == TokenType.NotEqual)
-		{
-			Token operatorToken = _tokens.Peek();
-			_tokens.Advance();
+        Match(TokenType.CloseParenthesis);
+        Match(TokenType.Semicolon);
+    }
 
-			object right = ParseComparison();
-			left = EvaluateEquality(left, right, operatorToken.Type);
-		}
+    private bool ContinueReadingArguments()
+    {
+        _tokens.Advance();
+        return _tokens.Peek().Type != TokenType.EndOfFile;
+    }
 
-		return left;
-	}
+    private void ParseIdentifierStatement()
+    {
+        Token identifierToken = _tokens.Peek();
+        _tokens.Advance();
 
-	/// <summary>
-	/// Разбирает выражение сравнения.
-	/// Правила: comparison = additive, { ( "<" | "<=" | ">" | ">=" ), additive } ;
-	/// </summary>
-	private object ParseComparison()
-	{
-		object left = ParseAdditive();
+        if (_tokens.Peek().Type == TokenType.Assign)
+        {
+            _tokens.Advance();
+            object value = ParseExpression();
+            Match(TokenType.Semicolon);
+            _symbols[identifierToken.Value!.ToString()!] = value;
+            return;
+        }
 
-		while (IsComparisonOperator(_tokens.Peek().Type))
-		{
-			Token operatorToken = _tokens.Peek();
-			_tokens.Advance();
+        // Не присваивание — обрабатываем как выражение, начиная с уже прочитанного идентификатора
+        ParseIdentifierExpression(identifierToken);
+        Match(TokenType.Semicolon);
+    }
 
-			object right = ParseAdditive();
-			left = EvaluateComparison(left, right, operatorToken.Type);
-		}
+    private void ParseBlock()
+    {
+        Match(TokenType.OpenBrace);
+        
+        while (_tokens.Peek().Type != TokenType.CloseBrace && _tokens.Peek().Type != TokenType.EndOfFile)
+        {
+            ParseStatement();
+        }
 
-		return left;
-	}
+        Match(TokenType.CloseBrace);
+    }
 
-	/// <summary>
-	/// Разбирает аддитивное выражение.
-	/// Правила: additive = multiplicative, { ( "+" | "-" ), multiplicative } ;
-	/// </summary>
-	private object ParseAdditive()
-	{
-		object left = ParseMultiplicative();
+    /// <summary>
+    /// Разбирает выражение.
+    /// Правила: expression = logical_or ;
+    /// </summary>
+    private object ParseExpression()
+    {
+        return ParseLogicalOr();
+    }
 
-		while (_tokens.Peek().Type == TokenType.Plus || _tokens.Peek().Type == TokenType.Minus)
-		{
-			Token operatorToken = _tokens.Peek();
-			_tokens.Advance();
+    /// <summary>
+    /// Разбирает логическое ИЛИ выражение.
+    /// Правила: logical_or = logical_and, { "||", logical_and } ;
+    /// </summary>
+    private object ParseLogicalOr()
+    {
+        object left = ParseLogicalAnd();
 
-			object right = ParseMultiplicative();
-			left = EvaluateAdditiveOperator(left, right, operatorToken.Type);
-		}
+        while (_tokens.Peek().Type == TokenType.Or)
+        {
+            _tokens.Advance();
+            object right = ParseLogicalAnd();
 
-		return left;
-	}
+            bool leftBool = Convert.ToBoolean(left);
+            bool rightBool = Convert.ToBoolean(right);
+            left = leftBool || rightBool;
+        }
 
-	/// <summary>
-	/// Разбирает мультипликативное выражение.
-	/// Правила: multiplicative = power, { ( "*" | "/" | "//" | "%" ), power } ;
-	/// </summary>
-	private object ParseMultiplicative()
-	{
-		object left = ParsePower();
+        return left;
+    }
 
-		while (IsMultiplicativeOperator(_tokens.Peek().Type))
-		{
-			Token operatorToken = _tokens.Peek();
-			_tokens.Advance();
+    /// <summary>
+    /// Разбирает логическое И выражение.
+    /// Правила: logical_and = equality, { "&&", equality } ;
+    /// </summary>
+    private object ParseLogicalAnd()
+    {
+        object left = ParseEquality();
 
-			object right = ParsePower();
-			left = EvaluateMultiplicativeOperator(left, right, operatorToken.Type);
-		}
+        while (_tokens.Peek().Type == TokenType.And)
+        {
+            _tokens.Advance();
+            object right = ParseEquality();
 
-		return left;
-	}
+            bool leftBool = Convert.ToBoolean(left);
+            bool rightBool = Convert.ToBoolean(right);
+            left = leftBool && rightBool;
+        }
 
-	/// <summary>
-	/// Разбирает выражение возведения в степень.
-	/// Правила: power = unary, [ "^", power ] ;
-	/// Оператор ^ правоассоциативный
-	/// </summary>
-	private object ParsePower()
-	{
-		object left = ParseUnary();
+        return left;
+    }
 
-		if (_tokens.Peek().Type == TokenType.Power)
-		{
-			_tokens.Advance();
-			object right = ParsePower(); // Рекурсия для правой ассоциативности
-			
-			decimal leftNum = Convert.ToDecimal(left);
-			decimal rightNum = Convert.ToDecimal(right);
-			left = (decimal)Math.Pow((double)leftNum, (double)rightNum);
-		}
+    /// <summary>
+    /// Разбирает выражение равенства/неравенства.
+    /// Правила: equality = comparison, { ( "==" | "!=" ), comparison } ;
+    /// </summary>
+    private object ParseEquality()
+    {
+        object left = ParseComparison();
 
-		return left;
-	}
+        while (_tokens.Peek().Type == TokenType.Equal || _tokens.Peek().Type == TokenType.NotEqual)
+        {
+            Token operatorToken = _tokens.Peek();
+            _tokens.Advance();
 
-	/// <summary>
-	/// Разбирает унарное выражение.
-	/// Правила: unary = "+" , unary | "-" , unary | "!" , unary | primary ;
-	/// </summary>
-	private object ParseUnary()
-	{
-		if (_tokens.Peek().Type == TokenType.Plus)
-		{
-			_tokens.Advance();
-			object operand = ParseUnary();
-			// Унарный + не меняет значение
-			return operand;
-		}
+            object right = ParseComparison();
+            left = EvaluateEquality(left, right, operatorToken.Type);
+        }
 
-		if (_tokens.Peek().Type == TokenType.Minus)
-		{
-			_tokens.Advance();
-			object operand = ParseUnary();
-			return -Convert.ToDecimal(operand);
-		}
+        return left;
+    }
 
-		if (_tokens.Peek().Type == TokenType.Not)
-		{
-			_tokens.Advance();
-			object operand = ParseUnary();
-			return !Convert.ToBoolean(operand);
-		}
+    /// <summary>
+    /// Разбирает выражение сравнения.
+    /// Правила: comparison = additive, { ( "<" | "<=" | ">" | ">=" ), additive } ;
+    /// </summary>
+    private object ParseComparison()
+    {
+        object left = ParseAdditive();
 
-		return ParsePrimary();
-	}
+        while (IsComparisonOperator(_tokens.Peek().Type))
+        {
+            Token operatorToken = _tokens.Peek();
+            _tokens.Advance();
 
-	/// <summary>
-	/// Разбирает первичное выражение.
-	/// Правила: primary = number | identifier | function_call | "(", expression, ")" ;
-	/// </summary>
-	private object ParsePrimary()
-	{
-		Token token = _tokens.Peek();
+            object right = ParseAdditive();
+            left = EvaluateComparison(left, right, operatorToken.Type);
+        }
 
-		switch (token.Type)
-		{
-			case TokenType.IntegerLiteral:
-			case TokenType.FloatLiteral:
-				_tokens.Advance();
-				return token.Value!.ToDecimal();
+        return left;
+    }
 
-			case TokenType.StringLiteral:
-				_tokens.Advance();
-				return token.Value!.ToString() ?? "";
+    /// <summary>
+    /// Разбирает аддитивное выражение.
+    /// Правила: additive = multiplicative, { ( "+" | "-" ), multiplicative } ;
+    /// </summary>
+    private object ParseAdditive()
+    {
+        object left = ParseMultiplicative();
 
-			case TokenType.Identifier:
-				return ParseFunctionCallOrIdentifier();
+        while (_tokens.Peek().Type == TokenType.Plus || _tokens.Peek().Type == TokenType.Minus)
+        {
+            Token operatorToken = _tokens.Peek();
+            _tokens.Advance();
 
-			case TokenType.OpenParenthesis:
-				_tokens.Advance();
-				object result = ParseExpression();
-				Match(TokenType.CloseParenthesis);
-				return result;
+            object right = ParseMultiplicative();
+            left = EvaluateAdditiveOperator(left, right, operatorToken.Type);
+        }
 
-			default:
-				throw new UnexpectedLexemeException("primary expression", token);
-		}
-	}
+        return left;
+    }
 
-	/// <summary>
-	/// Разбирает вызов функции или идентификатор.
-	/// Правила: function_call = function_name, "(", [ argument_list ], ")" ;
-	/// </summary>
-	private object ParseFunctionCallOrIdentifier()
-	{
-		Token identifierToken = _tokens.Peek();
-		string functionName = identifierToken.Value!.ToString();
-		_tokens.Advance();
-		
-		if (_tokens.Peek().Type == TokenType.OpenParenthesis)
-		{
-			_tokens.Advance();
+    /// <summary>
+    /// Разбирает мультипликативное выражение.
+    /// Правила: multiplicative = power, { ( "*" | "/" | "//" | "%" ), power } ;
+    /// </summary>
+    private object ParseMultiplicative()
+    {
+        object left = ParsePower();
 
-			List<decimal> arguments = new List<decimal>();
-			
-			if (_tokens.Peek().Type != TokenType.CloseParenthesis)
-			{
-				arguments.Add(Convert.ToDecimal(ParseExpression()));
-				
-				while (_tokens.Peek().Type == TokenType.Comma)
-				{
-					_tokens.Advance();
-					arguments.Add(Convert.ToDecimal(ParseExpression()));
-				}
-			}
+        while (IsMultiplicativeOperator(_tokens.Peek().Type))
+        {
+            Token operatorToken = _tokens.Peek();
+            _tokens.Advance();
 
-			Match(TokenType.CloseParenthesis);
-			return BuiltinFunctions.Invoke(functionName, arguments);
-		}
+            object right = ParsePower();
+            left = EvaluateMultiplicativeOperator(left, right, operatorToken.Type);
+        }
 
-		throw new UnexpectedLexemeException("function call", identifierToken);
-	}
+        return left;
+    }
 
-	private bool IsComparisonOperator(TokenType type)
-	{
-		return type == TokenType.Less || type == TokenType.Greater ||
-			   type == TokenType.LessOrEqual || type == TokenType.GreaterOrEqual;
-	}
+    /// <summary>
+    /// Разбирает выражение возведения в степень.
+    /// Правила: power = unary, [ "^", power ] ;
+    /// Оператор ^ правоассоциативный
+    /// </summary>
+    private object ParsePower()
+    {
+        object left = ParseUnary();
 
-	private bool IsMultiplicativeOperator(TokenType type)
-	{
-		return type == TokenType.Multiply || type == TokenType.Divide ||
-			   type == TokenType.IntegerDivide || type == TokenType.Modulo;
-	}
+        if (_tokens.Peek().Type == TokenType.Power)
+        {
+            _tokens.Advance();
+            object right = ParsePower(); // Рекурсия для правой ассоциативности
+            
+            decimal leftNum = Convert.ToDecimal(left);
+            decimal rightNum = Convert.ToDecimal(right);
+            left = (decimal)Math.Pow((double)leftNum, (double)rightNum);
+        }
 
-	private object EvaluateMultiplicativeOperator(object left, object right, TokenType operatorType)
-	{
-		if (left?.GetType() != right?.GetType())
-		{
-			throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
-		}
-		decimal leftNum = Convert.ToDecimal(left);
-		decimal rightNum = Convert.ToDecimal(right);
+        return left;
+    }
 
-		return operatorType switch
-		{
-			TokenType.Multiply => leftNum * rightNum,
-			TokenType.Divide => rightNum != 0 ? leftNum / rightNum : throw new DivideByZeroException(),
-			TokenType.IntegerDivide => rightNum != 0 ? Math.Floor(leftNum / rightNum) : throw new DivideByZeroException(),
-			TokenType.Modulo => rightNum != 0 ? leftNum % rightNum : throw new DivideByZeroException(),
-			_ => throw new Exception($"Unsupported multiplicative operator: {operatorType}")
-		};
-	}
+    /// <summary>
+    /// Разбирает унарное выражение.
+    /// Правила: unary = "+" , unary | "-" , unary | "!" , unary | primary ;
+    /// </summary>
+    private object ParseUnary()
+    {
+        if (_tokens.Peek().Type == TokenType.Plus)
+        {
+            _tokens.Advance();
+            object operand = ParseUnary();
+            // Унарный + не меняет значение
+            return operand;
+        }
 
-	private object EvaluateAdditiveOperator(object left, object right, TokenType operatorType)
-	{
-		// Конкатенация строк работает только для оператора +
-		if (operatorType == TokenType.Plus && (left is string || right is string))
-		{
-			return (left?.ToString() ?? "") + (right?.ToString() ?? "");
-		}
+        if (_tokens.Peek().Type == TokenType.Minus)
+        {
+            _tokens.Advance();
+            object operand = ParseUnary();
+            return -Convert.ToDecimal(operand);
+        }
 
-		if (left?.GetType() != right?.GetType())
-		{
-			throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
-		}
+        if (_tokens.Peek().Type == TokenType.Not)
+        {
+            _tokens.Advance();
+            object operand = ParseUnary();
+            return !Convert.ToBoolean(operand);
+        }
 
-		decimal leftNum = Convert.ToDecimal(left);
-		decimal rightNum = Convert.ToDecimal(right);
+        return ParsePrimary();
+    }
 
-		return operatorType switch
-		{
-			TokenType.Plus => leftNum + rightNum,
-			TokenType.Minus => leftNum - rightNum,
-			_ => throw new Exception($"Unsupported additive operator: {operatorType}")
-		};
-	}
+    /// <summary>
+    /// Разбирает первичное выражение.
+    /// Правила: primary = number | identifier | function_call | "(", expression, ")" ;
+    /// </summary>
+    private object ParsePrimary()
+    {
+        Token token = _tokens.Peek();
 
-	private object EvaluateEquality(object left, object right, TokenType operatorType)
-	{
-		if (left?.GetType() != right?.GetType())
-		{
-			throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
-		}
+        switch (token.Type)
+        {
+            case TokenType.IntegerLiteral:
+            case TokenType.FloatLiteral:
+                _tokens.Advance();
+                return token.Value!.ToDecimal();
 
-		return operatorType switch
-		{
-			TokenType.Equal => left!.Equals(right),
-			TokenType.NotEqual => !left!.Equals(right),
-			_ => throw new Exception($"Unsupported equality operator: {operatorType}")
-		};
-	}
+            case TokenType.StringLiteral:
+                _tokens.Advance();
+                return token.Value!.ToString() ?? "";
 
-	private object EvaluateComparison(object left, object right, TokenType operatorType)
-	{
-		if (left?.GetType() != right?.GetType())
-		{
-			throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
-		}
+            case TokenType.Identifier:
+                return ParseFunctionCallOrIdentifier();
 
-		return operatorType switch
-		{
-			TokenType.Less => Convert.ToDecimal(left) < Convert.ToDecimal(right),
-			TokenType.Greater => Convert.ToDecimal(left) > Convert.ToDecimal(right),
-			TokenType.LessOrEqual => Convert.ToDecimal(left) <= Convert.ToDecimal(right),
-			TokenType.GreaterOrEqual => Convert.ToDecimal(left) >= Convert.ToDecimal(right),
-			_ => throw new Exception($"Unsupported comparison operator: {operatorType}")
-		};
-	}
+            case TokenType.OpenParenthesis:
+                _tokens.Advance();
+                object result = ParseExpression();
+                Match(TokenType.CloseParenthesis);
+                return result;
 
-	private void Match(TokenType expected)
-	{
-		Token t = _tokens.Peek();
-		if (t.Type != expected)
-		{
-			throw new UnexpectedLexemeException(expected, t);
-		}
-		_tokens.Advance();
-	}
+            default:
+                throw new UnexpectedLexemeException("primary expression", token);
+        }
+    }
+
+    /// <summary>
+    /// Разбирает вызов функции или идентификатор.
+    /// Правила: function_call = function_name, "(", [ argument_list ], ")" ;
+    /// </summary>
+    private object ParseFunctionCallOrIdentifier()
+    {
+        Token identifierToken = _tokens.Peek();
+        string name = identifierToken.Value!.ToString()!;
+        _tokens.Advance();
+        
+        if (_tokens.Peek().Type == TokenType.OpenParenthesis)
+        {
+            _tokens.Advance();
+
+            List<decimal> arguments = new List<decimal>();
+            
+            if (_tokens.Peek().Type != TokenType.CloseParenthesis)
+            {
+                arguments.Add(Convert.ToDecimal(ParseExpression()));
+                
+                while (_tokens.Peek().Type == TokenType.Comma)
+                {
+                    _tokens.Advance();
+                    arguments.Add(Convert.ToDecimal(ParseExpression()));
+                }
+            }
+
+            Match(TokenType.CloseParenthesis);
+            return BuiltinFunctions.Invoke(name, arguments);
+        }
+
+        if (!_symbols.TryGetValue(name, out object? value))
+        {
+            throw new Exception($"Переменная '{name}' не определена.");
+        }
+
+        return value;
+    }
+
+    private object ParseIdentifierExpression(Token identifierToken)
+    {
+        string name = identifierToken.Value!.ToString()!;
+
+        if (_tokens.Peek().Type == TokenType.OpenParenthesis)
+        {
+            _tokens.Advance();
+
+            List<decimal> arguments = new List<decimal>();
+
+            if (_tokens.Peek().Type != TokenType.CloseParenthesis)
+            {
+                arguments.Add(Convert.ToDecimal(ParseExpression()));
+
+                while (_tokens.Peek().Type == TokenType.Comma)
+                {
+                    _tokens.Advance();
+                    arguments.Add(Convert.ToDecimal(ParseExpression()));
+                }
+            }
+
+            Match(TokenType.CloseParenthesis);
+            return BuiltinFunctions.Invoke(name, arguments);
+        }
+
+        if (!_symbols.TryGetValue(name, out object? value))
+        {
+            throw new Exception($"Переменная '{name}' не определена.");
+        }
+
+        return value;
+    }
+
+    private bool IsComparisonOperator(TokenType type)
+    {
+        return type == TokenType.Less || type == TokenType.Greater ||
+               type == TokenType.LessOrEqual || type == TokenType.GreaterOrEqual;
+    }
+
+    private bool IsMultiplicativeOperator(TokenType type)
+    {
+        return type == TokenType.Multiply || type == TokenType.Divide ||
+               type == TokenType.IntegerDivide || type == TokenType.Modulo;
+    }
+
+    private object EvaluateMultiplicativeOperator(object left, object right, TokenType operatorType)
+    {
+        if (left?.GetType() != right?.GetType())
+        {
+            throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
+        }
+        decimal leftNum = Convert.ToDecimal(left);
+        decimal rightNum = Convert.ToDecimal(right);
+
+        return operatorType switch
+        {
+            TokenType.Multiply => leftNum * rightNum,
+            TokenType.Divide => rightNum != 0 ? leftNum / rightNum : throw new DivideByZeroException(),
+            TokenType.IntegerDivide => rightNum != 0 ? Math.Floor(leftNum / rightNum) : throw new DivideByZeroException(),
+            TokenType.Modulo => rightNum != 0 ? leftNum % rightNum : throw new DivideByZeroException(),
+            _ => throw new Exception($"Unsupported multiplicative operator: {operatorType}")
+        };
+    }
+
+    private object EvaluateAdditiveOperator(object left, object right, TokenType operatorType)
+    {
+        // Конкатенация строк работает только для оператора +
+        if (operatorType == TokenType.Plus && (left is string || right is string))
+        {
+            return (left?.ToString() ?? "") + (right?.ToString() ?? "");
+        }
+
+        if (left?.GetType() != right?.GetType())
+        {
+            throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
+        }
+
+        decimal leftNum = Convert.ToDecimal(left);
+        decimal rightNum = Convert.ToDecimal(right);
+
+        return operatorType switch
+        {
+            TokenType.Plus => leftNum + rightNum,
+            TokenType.Minus => leftNum - rightNum,
+            _ => throw new Exception($"Unsupported additive operator: {operatorType}")
+        };
+    }
+
+    private object EvaluateEquality(object left, object right, TokenType operatorType)
+    {
+        if (left?.GetType() != right?.GetType())
+        {
+            throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
+        }
+
+        return operatorType switch
+        {
+            TokenType.Equal => left!.Equals(right),
+            TokenType.NotEqual => !left!.Equals(right),
+            _ => throw new Exception($"Unsupported equality operator: {operatorType}")
+        };
+    }
+
+    private object EvaluateComparison(object left, object right, TokenType operatorType)
+    {
+        if (left?.GetType() != right?.GetType())
+        {
+            throw new Exception($"Cannot compare different types: {left?.GetType().Name} and {right?.GetType().Name}");
+        }
+
+        return operatorType switch
+        {
+            TokenType.Less => Convert.ToDecimal(left) < Convert.ToDecimal(right),
+            TokenType.Greater => Convert.ToDecimal(left) > Convert.ToDecimal(right),
+            TokenType.LessOrEqual => Convert.ToDecimal(left) <= Convert.ToDecimal(right),
+            TokenType.GreaterOrEqual => Convert.ToDecimal(left) >= Convert.ToDecimal(right),
+            _ => throw new Exception($"Unsupported comparison operator: {operatorType}")
+        };
+    }
+
+    private void Match(TokenType expected)
+    {
+        Token t = _tokens.Peek();
+        if (t.Type != expected)
+        {
+            throw new UnexpectedLexemeException(expected, t);
+        }
+        _tokens.Advance();
+    }
 }
