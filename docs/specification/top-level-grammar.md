@@ -22,6 +22,59 @@ input(a);
 print(a + 5);
 ```
 
+### Ветвление if-else
+```dea
+var age;
+input(age);
+
+if (age >= 18) 
+{
+    print(1); 
+} 
+else 
+{
+    print(0); 
+}
+```
+
+### Циклы
+```dea
+var i = 1; 
+
+while (i <= 5) 
+{
+    print(i);
+    i = i + 1;
+}
+```
+
+```dea
+var i;
+for (i = 1 to 10)
+{
+    print(i);
+}
+```
+
+```dea
+for (i = 10 downto 1) 
+{
+    print(i);
+}
+```
+
+### Функции
+
+```dea
+func add(a, b) {
+    return a + b;
+}
+
+proc printResult(value) {
+    print(value);
+}
+```
+
 ## 2. Ключевые особенности и семантические правила языка DEA
 ### 2.1. Структура программы
    1. Программа находится в одном файле
@@ -46,6 +99,13 @@ print(a + 5);
    1. Присваивание не является выражением, но является инструкцией.
    2. Отдельные инструкции объявления переменных и констант
    3. Отдельные инструкции для чтения и печати
+   4. Условные инструкции
+   5. Цикл while
+   6. Цикл for
+   7. Вызов процедуры
+   8. Возврат из функции
+   9. Прерывание цикла
+   10. Продолжение цикла
 
 ### 2.6. Разделитель инструкций
 Символ-разделитель точка с запятой `;` обязательна между отдельными инструкциями.
@@ -56,15 +116,47 @@ print(a + 5);
 program = top_level_statement, { top_level_statement }, end_of_file ;
 
 (* Верхнеуровневая инструкция *)
-top_level_statement = statement, ";" ;
+top_level_statement = 
+      function_declaration
+      | procedure_declaration
+      | statement ;
 
-(* Инструкции *)
-statement =
+(* Объявление функции *)
+function_declaration = 
+      "func", identifier, "(", [ parameter_list ], ")", 
+      "{", { function_statement_item }, "}" ;
+
+(* Объявление процедуры *)
+procedure_declaration = 
+      "proc", identifier, "(", [ parameter_list ], ")", 
+      "{", { function_statement_item }, "}" ;
+
+(* Параметры функции *)
+parameter_list = identifier, { ",", identifier } ;
+
+(* Инструкции внутри функций *)
+function_statement_item =
+      return_statement 
+      | simple_statement, ";" 
+      | compound_statement ;
+
+(* Инструкции, включающие ';' внутри правила *)
+simple_statement =
       assignment_statement
       | variable_declaration
       | constant_declaration
       | input_statement
-      | print_statement ; 
+      | print_statement 
+      | procedure_call ; 
+
+(* Инструкции, НЕ включающие ';' внутри правила *)
+compound_statement =
+      matched_if_statement
+      | unmatched_if_statement 
+      | while_statement
+      | for_statement ;
+
+statement = simple_statement, ";" | compound_statement ;      
 
 (* Присваивание *)
 assignment_statement = identifier, "=", expression ;
@@ -80,4 +172,44 @@ input_statement = "input", "(", identifier, ")" ;
 
 (* Вывод *)
 print_statement = "print", "(", [ argument_list ], ")" ;
+
+(* Инструкция возврата из функции или процедуры *)
+return_statement = "return", [ expression ], ";" ;
+
+(* Блок инструкций *)
+block = "{", { statement }, "}" ;
+
+(* Конструкция if с else *)
+matched_if_statement =
+      "if", "(", expression, ")", block, "else", block ;   
+       
+(* Конструкция if без else *)
+unmatched_if_statement =
+      "if", "(", expression, ")", block
+      | "if", "(", expression, ")", matched_if_statement, "else", unmatched_if_statement ;
+
+(* Инструкция break *)
+break_statement = "break" ;
+
+(* Инструкция continue *)
+continue_statement = "continue" ;
+
+(* Блок инструкций для циклов (может содержать break/continue) *)
+loop_block = "{", { loop_statement }, "}" ;
+
+(* Инструкции внутри циклов *)
+loop_statement =
+    statement
+    | continue_statement, ";"
+    | break_statement, ";" ;
+    
+(* Цикл while *)
+while_statement = "while", "(", expression, ")", loop_block ;
+
+(* Цикл for *)
+for_statement = "for", "(", assignment_statement, ( "to" | "downto" ), expression, ")", loop_block ;
+
+(* Вызов процедуры *)
+procedure_call = identifier, "(", [ argument_list ], ")" ;
+
 ```

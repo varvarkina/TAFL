@@ -113,10 +113,10 @@ primary = number
         | "(", expression, ")" ;
 
 (* Вызовы функций *)
-function_call_expression = function_name, "(", [ argument_list ], ")" ;
+function_call_expression = (built_in_function | identifier), "(", [ argument_list ], ")" ;
 
 (* Имена встроенных функций *)
-function_name = "abs"| "min"| "max";   
+built_in_function = "abs"| "min"| "max";   
 
 (* Список аргументов функции *)
 argument_list = expression, { ",", expression } ;
