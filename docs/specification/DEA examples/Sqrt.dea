@@ -1,0 +1,29 @@
+/* Sqrt — вычисление квадратного корня методом Ньютона
+Реализация должна использовать именно цикл с методом Ньютона, 
+а не встроенный оператор или функцию */
+
+func sqrt(number) {
+    const epsilon = 0.00001;
+    
+    if (number == 0 || number < 0)
+    {
+        return 0;
+    } 
+    else 
+    {
+        var guess = number / 2;
+        var previousGuess = number + 1;
+
+        while (abs(guess - previousGuess) > epsilon) {
+            previousGuess = guess;
+            guess = (guess + number / guess) / 2;
+        }
+        
+        return guess;
+    }
+}
+
+var value;
+input(value);
+var root = sqrt(value);
+print(root);
