@@ -66,11 +66,13 @@ for (i = 10 downto 1)
 ### Функции
 
 ```dea
-func add(a, b) {
+func add(a, b) 
+{
     return a + b;
 }
 
-proc printResult(value) {
+proc printResult(value) 
+{
     print(value);
 }
 ```
