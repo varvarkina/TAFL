@@ -1,0 +1,18 @@
+# Factorial — читает число N и считает его факториал N!, используя цикл
+
+func factorial(n) {
+    var result = 1;
+    var i = 2;
+    
+    while (i <= n) {
+        result = result * i;
+        i = i + 1;
+    }
+    
+    return result;
+}
+
+var number;
+input(number);
+var fact = factorial(number);
+print(fact);

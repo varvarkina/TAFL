@@ -1,0 +1,23 @@
+/* SumSquares - Вычисление суммы квадратов чисел от 1 до N*/
+
+func sumSquares(n) {
+    if (n < 1) 
+    {
+        return 0;
+    } 
+    else 
+    {
+        var sum = 0;
+        var i;
+        
+        for (i = 1 to n) {
+            sum = sum + i * i;
+        }
+        
+        return sum;
+    }
+}
+
+var n;
+input(n);
+print(sumSquares(n));
