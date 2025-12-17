@@ -1,6 +1,14 @@
 /* Sqrt — вычисление квадратного корня методом Ньютона
 Реализация должна использовать именно цикл с методом Ньютона, 
-а не встроенный оператор или функцию */
+а не встроенный оператор или функцию
+
+xₙ₊₁ = (xₙ + a / xₙ) / 2
+
+Где:
+xₙ — текущее приближение
+a — число, из которого извлекаем корень
+xₙ₊₁ — следующее, более точное приближение
+*/
 
 func sqrt(number) {
     const epsilon = 0.00001;
@@ -11,8 +19,8 @@ func sqrt(number) {
     } 
     else 
     {
-        var guess = number / 2;
-        var previousGuess = number + 1;
+        var guess = number / 2; # Начальное приближение
+        var previousGuess = number + 1; # Предыдущее значение (заведомо отличающееся)
 
         while (abs(guess - previousGuess) > epsilon) {
             previousGuess = guess;
