@@ -29,7 +29,6 @@ public class LexicalStats
                 case TokenType.Var:
                 case TokenType.Const:
                 case TokenType.Func:
-                case TokenType.Proc:
                 case TokenType.Return:
                 case TokenType.If:
                 case TokenType.Else:

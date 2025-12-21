@@ -12,7 +12,6 @@ public class Lexer
         { "var", TokenType.Var },
         { "const", TokenType.Const },
         { "func", TokenType.Func },
-        { "proc", TokenType.Proc },
         { "return", TokenType.Return },
         { "if", TokenType.If },
         { "else", TokenType.Else },

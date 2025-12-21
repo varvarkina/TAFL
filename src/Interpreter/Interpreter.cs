@@ -1,4 +1,5 @@
 using Execution;
+using Parser;
 
 namespace Interpreter;
 
@@ -25,8 +26,9 @@ public class Interpreter
             throw new ArgumentException("Source code cannot be null or empty", nameof(sourceCode));
         }
 
-        // Создаем парсер и выполняем программу
-        Parser.Parser parser = new(sourceCode, _environment);
+        // Создаем контекст и парсер
+        Context context = new();
+        Parser.Parser parser = new(context, sourceCode, _environment);
         parser.ParseProgram();
     }
 }

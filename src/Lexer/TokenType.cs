@@ -20,11 +20,6 @@ public enum TokenType
     Func,
 
     /// <summary>
-    /// Ключевое слово proc
-    /// </summary>
-    Proc,
-
-    /// <summary>
     /// Ключевое слово return
     /// </summary>
     Return,
