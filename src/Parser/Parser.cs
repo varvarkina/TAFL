@@ -50,7 +50,7 @@ public class Parser
     {
         Token token = _tokens.Peek();
 
-        if (token.Type == TokenType.Func)
+        if (token.Type == TokenType.Func || token.Type == TokenType.Proc)
         {
             return ParseFunctionDeclaration();
         }
@@ -64,7 +64,15 @@ public class Parser
     /// </summary>
     private AstNode ParseFunctionDeclaration()
     {
-        Match(TokenType.Func);
+        if (_tokens.Peek().Type == TokenType.Func)
+        {
+            Match(TokenType.Func);
+        }
+        else
+        {
+            Match(TokenType.Proc);
+        }
+        
         string functionName = ParseIdentifier();
         List<string> parameters = ParseParameterList();
         List<AstNode> body = ParseFunctionBlock();
