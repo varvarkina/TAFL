@@ -7,7 +7,6 @@ namespace Parser;
 
 /// <summary>
 /// Выполняет синтаксический разбор выражений языка DEA.
-/// Грамматика описана в файле `docs/specification/expressions-grammar.md`.
 /// </summary>
 public class Parser
 {
@@ -21,7 +20,6 @@ public class Parser
         _environment = environment;
     }
 
-    // Private constructor for EvaluateExpression (legacy support)
     private Parser(string code) : this(code, new FakeEnvironment())
     {
     }
@@ -36,6 +34,10 @@ public class Parser
         return new Row(result);
     }
 
+    /// <summary>
+    /// Разбирает программу языка DEA.
+    /// Последовательно разбирает все инструкции до конца файла.
+    /// </summary>
     public void ParseProgram()
     {
         while (_tokens.Peek().Type != TokenType.EndOfFile)
@@ -44,6 +46,10 @@ public class Parser
         }
     }
 
+    /// <summary>
+    /// Разбирает инструкцию верхнего уровня.
+    /// Обрабатывает объявления переменных, констант, ввод/вывод, блоки и выражения.
+    /// </summary>
     private void ParseStatement()
     {
         Token token = _tokens.Peek();
@@ -68,7 +74,7 @@ public class Parser
                 ParseIdentifierStatement();
                 break;
             case TokenType.Semicolon:
-                _tokens.Advance(); // Empty statement
+                _tokens.Advance();
                 break;
             default:
                 ParseExpression();
@@ -77,6 +83,10 @@ public class Parser
         }
     }
 
+    /// <summary>
+    /// Разбирает объявление переменной.
+    /// Правила: var_def = "var", identifier, [ "=", expression ], ";" ;
+    /// </summary>
     private void ParseVarDef()
     {
         Match(TokenType.Var);
@@ -95,6 +105,10 @@ public class Parser
         _symbols[identifier.Value!.ToString()!] = value;
     }
 
+    /// <summary>
+    /// Разбирает объявление константы.
+    /// Правила: const_def = "const", identifier, "=", expression, ";" ;
+    /// </summary>
     private void ParseConstDef()
     {
         Match(TokenType.Const);
@@ -107,6 +121,10 @@ public class Parser
         _symbols[identifier.Value!.ToString()!] = value;
     }
 
+    /// <summary>
+    /// Разбирает инструкцию ввода.
+    /// Правила: input = "input", "(", identifier, ")", ";" ;
+    /// </summary>
     private void ParseInput()
     {
         Match(TokenType.Input);
@@ -121,6 +139,10 @@ public class Parser
         _symbols[identifier.Value!.ToString()!] = val;
     }
 
+    /// <summary>
+    /// Разбирает инструкцию вывода.
+    /// Правила: print = "print", "(", [ expression, { ",", expression } ], ")", ";" ;
+    /// </summary>
     private void ParsePrint()
     {
         Match(TokenType.Print);
@@ -139,12 +161,19 @@ public class Parser
         Match(TokenType.Semicolon);
     }
 
+    /// <summary>
+    /// Продолжает чтение аргументов функции, если не достигнут конец файла.
+    /// </summary>
     private bool ContinueReadingArguments()
     {
         _tokens.Advance();
         return _tokens.Peek().Type != TokenType.EndOfFile;
     }
 
+    /// <summary>
+    /// Разбирает инструкцию, начинающуюся с идентификатора.
+    /// Может быть присваиванием или выражением.
+    /// </summary>
     private void ParseIdentifierStatement()
     {
         Token identifierToken = _tokens.Peek();
@@ -164,6 +193,10 @@ public class Parser
         Match(TokenType.Semicolon);
     }
 
+    /// <summary>
+    /// Разбирает блок кода.
+    /// Правила: block = "{", { statement }, "}" ;
+    /// </summary>
     private void ParseBlock()
     {
         Match(TokenType.OpenBrace);
@@ -432,6 +465,10 @@ public class Parser
         return value;
     }
 
+    /// <summary>
+    /// Разбирает выражение, начинающееся с идентификатора.
+    /// Может быть вызовом функции или использованием переменной.
+    /// </summary>
     private object ParseIdentifierExpression(Token identifierToken)
     {
         string name = identifierToken.Value!.ToString()!;
@@ -465,18 +502,27 @@ public class Parser
         return value;
     }
 
+    /// <summary>
+    /// Проверяет, является ли токен оператором сравнения.
+    /// </summary>
     private bool IsComparisonOperator(TokenType type)
     {
         return type == TokenType.Less || type == TokenType.Greater ||
                type == TokenType.LessOrEqual || type == TokenType.GreaterOrEqual;
     }
 
+    /// <summary>
+    /// Проверяет, является ли токен мультипликативным оператором.
+    /// </summary>
     private bool IsMultiplicativeOperator(TokenType type)
     {
         return type == TokenType.Multiply || type == TokenType.Divide ||
                type == TokenType.IntegerDivide || type == TokenType.Modulo;
     }
 
+    /// <summary>
+    /// Вычисляет результат мультипликативной операции (*, /, //, %).
+    /// </summary>
     private object EvaluateMultiplicativeOperator(object left, object right, TokenType operatorType)
     {
         if (left?.GetType() != right?.GetType())
@@ -496,6 +542,10 @@ public class Parser
         };
     }
 
+    /// <summary>
+    /// Вычисляет результат аддитивной операции (+, -).
+    /// Поддерживает конкатенацию строк для оператора +.
+    /// </summary>
     private object EvaluateAdditiveOperator(object left, object right, TokenType operatorType)
     {
         // Конкатенация строк работает только для оператора +
@@ -520,6 +570,9 @@ public class Parser
         };
     }
 
+    /// <summary>
+    /// Вычисляет результат операции равенства/неравенства (==, !=).
+    /// </summary>
     private object EvaluateEquality(object left, object right, TokenType operatorType)
     {
         if (left?.GetType() != right?.GetType())
@@ -535,6 +588,9 @@ public class Parser
         };
     }
 
+    /// <summary>
+    /// Вычисляет результат операции сравнения (<, <=, >, >=).
+    /// </summary>
     private object EvaluateComparison(object left, object right, TokenType operatorType)
     {
         if (left?.GetType() != right?.GetType())
@@ -552,6 +608,10 @@ public class Parser
         };
     }
 
+    /// <summary>
+    /// Проверяет, что текущий токен соответствует ожидаемому типу, и продвигает поток токенов.
+    /// Выбрасывает исключение, если токен не соответствует ожидаемому.
+    /// </summary>
     private void Match(TokenType expected)
     {
         Token t = _tokens.Peek();

@@ -20,7 +20,6 @@ public class InterpreterTests
             print(area);
         ";
 
-        // Input radius = 10
         var env = new FakeEnvironment(10.0);
         var interpreter = new Interpreter(env);
         interpreter.Execute(code);
