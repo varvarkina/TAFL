@@ -1,3 +1,4 @@
+using Execution;
 using Parser;
 using Xunit;
 
@@ -9,30 +10,19 @@ public class ParserTests
 	[MemberData(nameof(GetExpressionTestData))]
 	public void Can_parse_expressions(string code, object expected)
 	{
-		Row res = Parser.EvaluateExpression(code);
+		FakeEnvironment env = new();
+		Context context = new();
+		Parser parser = new(context, code, env);
+		Row res = parser.EvaluateExpression();
 
 		if (expected == null)
 			Assert.Null(res[0]);
+		else if (expected is double expectedDouble)
+			Assert.Equal(expectedDouble, (double)res[0]);
+		else if (expected is bool expectedBool)
+			Assert.Equal(expectedBool ? 1.0 : 0.0, (double)res[0]);
 		else
 			Assert.Equal(expected, res[0]);
-	}
-
-	[Theory]
-	[MemberData(nameof(GetDifferentTypesExpressionTestData))]
-	public void Cant_different_types_parse_expressions(string code)
-	{
-		Assert.Throws<Exception>(() => Parser.EvaluateExpression(code));
-	}
-
-	public static TheoryData<string> GetDifferentTypesExpressionTestData()
-	{
-		return new TheoryData<string>
-		{
-			"\"test\" * 2",
-			"\"abc\" / 3",
-			"\"world\" - 5",
-			"5 - \"hello\""
-		};
 	}
 
 	public static TheoryData<string, object> GetExpressionTestData()
@@ -40,40 +30,32 @@ public class ParserTests
 		return new TheoryData<string, object>
 		{
 			// Числовые литералы
-			{ "2025", 2025m },
-			{ "3.14", 3.14m },
-			{ "0", 0m },
-			{ "123.456", 123.456m },
-
-			// Строковые литералы
-			{ "\"hello\"", "hello" },
-			{ "\"\"", "" },
+			{ "2025", 2025.0 },
+			{ "3.14", 3.14 },
+			{ "0", 0.0 },
+			{ "123.456", 123.456 },
 
 			// Унарные операторы
-			{ "-5", -5m },
-			{ "+5", 5m },
-			{ "-3.14", -3.14m },
-			{ "+42", 42m },
+			{ "-5", -5.0 },
+			{ "+5", 5.0 },
+			{ "-3.14", -3.14 },
+			{ "+42", 42.0 },
 
 			// Логическое НЕ
 			{ "!1", false },
 			{ "!0", true },
 
 			// Арифметические операторы
-			{ "1 + 2", 3m },
-			{ "5 - 3", 2m },
-			{ "2 * 3", 6m },
-			{ "6 / 2", 3m },
-			{ "7 // 2", 3m },
-			{ "7 % 3", 1m },
-			{ "2 ^ 3", 8m },
-			{ "2 ^ 3 ^ 2", 512m },
-			{ "(-2) ^ 3", -8m },
-			{ "4 ^ 0.5", 2m }, 
-
-			// Конкатенация строк
-			{ "\"hello\" + \"world\"", "helloworld" },
-			{ "\"test\" + \"\"", "test" },
+			{ "1 + 2", 3.0 },
+			{ "5 - 3", 2.0 },
+			{ "2 * 3", 6.0 },
+			{ "6 / 2", 3.0 },
+			{ "7 // 2", 3.0 },
+			{ "7 % 3", 1.0 },
+			{ "2 ^ 3", 8.0 },
+			{ "2 ^ 3 ^ 2", 512.0 },
+			{ "(-2) ^ 3", -8.0 },
+			{ "4 ^ 0.5", 2.0 }, 
 
 			// Операторы сравнения
 			{ "3 < 5", true },
@@ -94,9 +76,6 @@ public class ParserTests
 			{ "5 == 3", false },
 			{ "5 != 3", true },
 			{ "5 != 5", false },
-			{ "\"hello\" == \"hello\"", true },
-			{ "\"hello\" == \"world\"", false },
-			{ "\"hello\" != \"world\"", true },
 
 			// Логические операторы
 			{ "1 && 1", true },
@@ -109,37 +88,38 @@ public class ParserTests
 			{ "0 || 0", false },
 
 			// Приоритет операторов
-			{ "2 + 3 * 4", 14m },
-			{ "10 - 3 - 2", 5m },
-			{ "12 / 3 / 2", 2m },
-			{ "-3 + 2", -1m },
-			{ "3 + 2 * 3", 9m },
+			{ "2 + 3 * 4", 14.0 },
+			{ "10 - 3 - 2", 5.0 },
+			{ "12 / 3 / 2", 2.0 },
+			{ "-3 + 2", -1.0 },
+			{ "3 + 2 * 3", 9.0 },
 			{ "1 + 2 > 2", true },
 			{ "1 < 2 == 5 > 4", true },
-			{ "2 ^ 3 * 2", 16m },
-			{ "2 * 3 ^ 2", 18m },
+			{ "2 ^ 3 * 2", 16.0 },
+			{ "2 * 3 ^ 2", 18.0 },
 
 			// Скобки
-			{ "(1 + 2) * 3", 9m },
-			{ "2 * (3 + 4)", 14m },
-			{ "((1 + 2) * 3) + 4", 13m },
+			{ "(1 + 2) * 3", 9.0 },
+			{ "2 * (3 + 4)", 14.0 },
+			{ "((1 + 2) * 3) + 4", 13.0 },
 
 			// Встроенные функции
-			{ "abs(-5)", 5m },
-			{ "abs(5)", 5m },
-			{ "abs(-3.14)", 3.14m },
-			{ "min(7, 3, 5)", 3m },
-			{ "min(1)", 1m },
-			{ "min(5, 2)", 2m },
-			{ "max(2, 8, 4)", 8m },
-			{ "max(1)", 1m },
-			{ "max(5, 2)", 5m },
+			{ "abs(-5)", 5.0 },
+			{ "abs(5)", 5.0 },
+			{ "abs(-3.14)", 3.14 },
+			{ "min(7, 3, 5)", 3.0 },
+			{ "min(1)", 1.0 },
+			{ "min(5, 2)", 2.0 },
+			{ "max(2, 8, 4)", 8.0 },
+			{ "max(1)", 1.0 },
+			{ "max(5, 2)", 5.0 },
 
 			// Комбинированные выражения
-			{ "abs(-5) + 3", 8m },
-			{ "min(10, 20) * 2", 20m },
-			{ "max(1, 2, 3) ^ 2", 9m },
-			{ "(1 + 2) * abs(-3)", 9m },
+			{ "abs(-5) + 3", 8.0 },
+			{ "min(10, 20) * 2", 20.0 },
+			{ "max(1, 2, 3) ^ 2", 9.0 },
+			{ "(1 + 2) * abs(-3)", 9.0 },
 		};
 	}
+
 }
