@@ -64,16 +64,13 @@ WS : [ \t\r\n]+ -> skip ;
 ```antlr
 expression
     : NUMBER
-    | NUMBER '+' expression    // Правая рекурсия (неправильно для ANTLR4 до обработки)
+    | NUMBER '+' expression    // Правая рекурсия 
     ;
 ```
 
 При левой рекурсии старые парсеры (типа ANTLR3) входили в бесконечный цикл. **ANTLR4 встроенно поддерживает левую рекурсию**, но правая рекурсия может привести к неправильной ассоциативности.
 
-### Диагностика:
-```
-Error: left-recursive rule ... is not supported in this version
-```
+
 Или неправильный разбор: `1 + 2 + 3` парсится как `1 + (2 + 3)` вместо `(1 + 2) + 3`.
 
 ### Решение - Левая рекурсия (ПРАВИЛЬНО):
@@ -121,17 +118,20 @@ expression
 
 ### Решение - Явное указание в ANTLR4:
 ```antlr
-// Способ 1: Используя левую рекурсию (автоматически левоассоциативно)
+// Способ 1: Левая рекурсия (ANTLR4 переписывает внутрь, дает левую ассоциативность)
 expression
-    : expression op=(PLUS | MINUS) expression
+    : expression (PLUS | MINUS) expression
+    | NUMBER
     ;
+// ⚠️ Математически эта грамматика неоднозначна для 1-2-3,
+// но ANTLR4 специально переписывает её, получая ((1-2)-3).
 ```
 
 ANTLR4 при обнаружении левой рекурсии **автоматически применяет левоассоциативность**.
 
 Или явно:
 ```antlr
-// Способ 2: Иерархия правил (неявная левоассоциативность)
+// Способ 2: Иерархия правил (явная левоассоциативность, БЕЗ неоднозначности)
 expression
     : term ((PLUS | MINUS) term)*
     ;
@@ -162,25 +162,20 @@ expression
 ```
 
 ### Решение:
-ANTLR4 поддерживает указание ассоциативности в бинарном выражении:
+❌ Неправильно (даёт левую ассоциативность):
 
 ```antlr
 expression
-    : expression op='^' expression   // Без указания — левоассоциативно
-    ;
-
-// Правильно для возведения в степень:
-expression
-    : base=expression op='^' exp=expression    // Нужно изменить
+    : expression '^' expression    // Всегда (2 ^ 3) ^ 2
+    | NUMBER
     ;
 ```
 
-**Лучший способ — использовать правую рекурсию:**
+✅ Правильно — правая рекурсия (рекомендуется):
 
 ```antlr
-// Правоассоциативный оператор
-power
-    : base=factor ('^' exp=power)?
+power          // Отдельный уровень для ^
+    : factor ('^' power)?      // Рекурсия СПРАВА!
     ;
 
 factor
@@ -188,19 +183,21 @@ factor
     | '(' expression ')'
     ;
 
-expression
+expression     // + -
     : term ((PLUS | MINUS) term)*
     ;
 
-term
+term           // * /
     : power ((MUL | DIV) power)*
     ;
+
 ```
 
-Или явное указание в ANTLR4 (версия 4.7+):
+Альтернатива (ANTLR 4.7+):
 ```antlr
 expression
-    : expression op='^'<assoc=right> expression
+    : <assoc=right> expression '^' expression
+    | ...
     ;
 ```
 
@@ -219,41 +216,34 @@ expression
     ;
 ```
 
-При входе `foo(1)` парсер не знает: это переменная `foo` или функция?
+**Проблема:** обе первые альтернативы начинаются с `ID`, и когда парсер видит `foo(1)`, он может выбрать:
+- **Вариант А:** просто `ID` → распознаёт только `foo`, остаток `(1)` — ошибка
+- **Вариант Б:** `ID '(' expression ')'` → правильно распознаёт `foo(1)`
 
-### Диагностика:
-```
-warning(125): ambiguous input ...
-Multiple paths could match input
-```
-Или непредсказуемое поведение при разборе.
+Парсер не знает, какой вариант выбрать → **неоднозначность**.
 
 ### Решение:
 Переструктурировать грамматику, чтобы разделить случаи:
 
 ```antlr
 expression
-    : term ((PLUS | MINUS) term)*
+    : additive
     ;
 
-term
-    : factor ((MUL | DIV) factor)*
+additive
+    : postfix ('+' postfix)*
     ;
 
-factor
-    : primary
-    | primary '(' argList? ')'     // Явный вызов функции
+postfix
+    : primary ('(' expression ')')?
     ;
 
 primary
-    : ID                           // Просто переменная
+    : ID
     | NUMBER
     | '(' expression ')'
     ;
 
-argList
-    : expression (',' expression)*
-    ;
 ```
 
 **Теперь `ID` сам по себе — это переменная, `ID(...)` — вызов функции.**
@@ -277,9 +267,11 @@ if (x) then if (y) then a else b
 // (b) if (x) then (if (y) then a else b)
 ```
 
+Это классическая неоднозначность "dangling else": возможны два дерева разбора.
+
 ### Решение:
 
-Использовать **SLL предсказание** и правила приоритета:
+Сделать `else` **опциональным** в одном правиле. Тогда ANTLR применяет "greedy" поведение: если `else` есть, он привязывается к ближайшему (внутреннему) `if`.
 
 ```antlr
 statement
@@ -288,23 +280,11 @@ statement
     ;
 
 ifStatement
-    : 'if' expression 'then' statement
-    | 'if' expression 'then' statement 'else' statement
-    ;
-
-// ANTLR4 по умолчанию применяет "greedy" правило:
-// 'else' привязывается к ближайшему 'if'
-```
-
-Или явно использовать `#` (labels) для ясности:
-
-```antlr
-statement
-    : 'if' expression 'then' thenPart=statement ('else' elsePart=statement)?  #IfStatement
-    | otherStatement  #OtherStatement
+    : 'if' expression 'then' thenPart=statement ('else' elsePart=statement)? #IfStatement
     ;
 ```
-
+Теперь `if (x) then if (y) then a else b` парсится как:
+`if (x) then (if (y) then a else b)` (else относится к ближайшему if).
 ---
 
 ## 6. Производительность грамматики
@@ -351,140 +331,3 @@ Weird character errors
 - В Visual Studio: File → Advanced Save Options → UTF-8 without signature
 
 ---
-
-## 8. Обработка ошибок в грамматике
-
-### Проблема:
-Парсер падает при неправильном входе, нет информативных сообщений об ошибке.
-
-### Решение - Пользовательский обработчик ошибок:
-
-```csharp
-public class CustomErrorListener : BaseErrorListener
-{
-    public override void SyntaxError(
-        IRecognizer recognizer,
-        IToken offendingSymbol,
-        int line,
-        int charPositionInLine,
-        string msg,
-        RecognitionException e)
-    {
-        Console.WriteLine($"Error at line {line}:{charPositionInLine} - {msg}");
-    }
-}
-
-// Использование:
-var lexer = new CalculatorLexer(inputStream);
-var parser = new CalculatorParser(new CommonTokenStream(lexer));
-parser.RemoveErrorListeners();
-parser.AddErrorListener(new CustomErrorListener());
-```
-
----
-
-## Чек-лист для проверки грамматики
-
-- [ ] **Приоритет:** Операторы с более высоким приоритетом на более низких уровнях?
-- [ ] **Ассоциативность:** Левая рекурсия для левоассоциативных операторов?
-- [ ] **Правая ассоциативность:** Правая рекурсия для операторов типа `^`, `:=`?
-- [ ] **Неоднозначность:** Нет ли предупреждений при сборке?
-- [ ] **Кодировка:** Файл `.g4` в UTF-8 без BOM?
-- [ ] **Пробелы:** Лексер корректно пропускает пробелы (`WS -> skip`)?
-- [ ] **Граница токена:** Разделены ли ID и NUMBER правильно?
-- [ ] **Тестирование:** Протестированы ли граничные случаи?
-
----
-
-## Полный рабочий пример грамматики выражений
-
-```antlr
-grammar Expression;
-
-// Entry point
-program
-    : statement+ EOF
-    ;
-
-statement
-    : expression NEWLINE
-    | assignment NEWLINE
-    ;
-
-assignment
-    : ID '=' expression
-    ;
-
-expression
-    : term ((PLUS | MINUS) term)*
-    ;
-
-term
-    : factor ((MUL | DIV) factor)*
-    ;
-
-factor
-    : power
-    ;
-
-power
-    : unary (POW unary)*
-    ;
-
-unary
-    : (MINUS | NOT)? postfix
-    ;
-
-postfix
-    : primary (LBRACKET expression RBRACKET)*
-    ;
-
-primary
-    : LPAREN expression RPAREN
-    | ID LPAREN argList? RPAREN   // Вызов функции
-    | NUMBER
-    | ID                           // Переменная
-    | STRING
-    ;
-
-argList
-    : expression (',' expression)*
-    ;
-
-// Токены
-LPAREN   : '(' ;
-RPAREN   : ')' ;
-LBRACKET : '[' ;
-RBRACKET : ']' ;
-PLUS     : '+' ;
-MINUS    : '-' ;
-MUL      : '*' ;
-DIV      : '/' ;
-POW      : '^' ;
-NOT      : '!' ;
-NEWLINE  : '\r'? '\n' ;
-
-ID
-    : [a-zA-Z_][a-zA-Z0-9_]*
-    ;
-
-NUMBER
-    : [0-9]+ ('.' [0-9]+)?
-    ;
-
-STRING
-    : '"' (~["\\\r\n] | '\\' .)* '"'
-    ;
-
-WS
-    : [ \t]+ -> skip
-    ;
-```
-
-**Эта грамматика корректно обрабатывает:**
-- Приоритет: `^` > `*,/` > `+,-`
-- Левоассоциативность для `+,-,*,/`
-- Правоассоциативность для `^`
-- Вызовы функций и индексацию
-- Унарные операторы
-- Скобки для переопределения приоритета
