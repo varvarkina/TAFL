@@ -111,6 +111,13 @@ public sealed class GrammarValidatorTests
         "abs()",
         "min()",
         "max()",
+
+        // Унарные (цепочки и пробелы)
+        "!!1",
+        "! + 1",
+        "+ 1",
+        "- 1",
+        "1 + + 2",
     };
 
     public static TheoryData<string> Invalid() => new()
@@ -144,8 +151,6 @@ public sealed class GrammarValidatorTests
         "-",
         "+",
         "!",
-        "!!",
-        "! + 1",
         "- * 2",
         "+ / 2",
 
@@ -170,11 +175,8 @@ public sealed class GrammarValidatorTests
         "2 % % 3",
 
         // Аддитивные: + -
-        "+ 1",
         "1 +",
-        "- 1",          // если унарный минус разрешён, то "- 1" может быть валиден; тогда удали этот кейс
         "1 -",
-        "1 + + 2",
         "1 - -",        // нет правого операнда
         "1 + * 2",
         "1 - / 2",
@@ -223,7 +225,6 @@ public sealed class GrammarValidatorTests
 
         // Вызовы функций: abs/min/max (синтаксические ошибки в списке аргументов)
         "abs(",
-        "abs)",
         "abs)",
         "abs(1",
         "abs(,)",
