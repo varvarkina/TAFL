@@ -179,8 +179,9 @@ public static class TextUtil
 
             return new RgbColor(red, green, blue);
         }
-        else // Формат #RRGGBB
+        else
         {
+            // Формат #RRGGBB
             byte red = (byte)(ParseHexDigit(hexPart[0]) * 16 + ParseHexDigit(hexPart[1]));
             byte green = (byte)(ParseHexDigit(hexPart[2]) * 16 + ParseHexDigit(hexPart[3]));
             byte blue = (byte)(ParseHexDigit(hexPart[4]) * 16 + ParseHexDigit(hexPart[5]));
