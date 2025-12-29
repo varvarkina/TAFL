@@ -397,12 +397,10 @@ public class Parser
         Match(TokenType.For);
         Match(TokenType.OpenParenthesis);
 
-        // Parse assignment_statement: identifier = expression
         string iteratorName = ParseIdentifier();
         Match(TokenType.Assign);
         Expression startValue = ParseExpression();
 
-        // Parse to or downto
         bool isDownto = false;
         if (_tokens.Peek().Type == TokenType.To)
         {
@@ -431,12 +429,10 @@ public class Parser
         }
         Match(TokenType.CloseBrace);
 
-        // Create EndCondition: iterator <= endValue (for "to") or iterator >= endValue (for "downto")
         Expression iteratorVar = new VariableExpression(iteratorName);
         BinaryOperation comparisonOp = isDownto ? BinaryOperation.GreaterThanOrEqual : BinaryOperation.LessThanOrEqual;
         Expression endCondition = new BinaryOperationExpression(iteratorVar, comparisonOp, endValue);
 
-        // Create StepValue: iterator = iterator + 1 (for "to") or iterator = iterator - 1 (for "downto")
         Expression oneLiteral = new LiteralExpression(1.0);
         BinaryOperation stepOp = isDownto ? BinaryOperation.Minus : BinaryOperation.Plus;
         Expression stepExpression = new BinaryOperationExpression(iteratorVar, stepOp, oneLiteral);
@@ -504,8 +500,6 @@ public class Parser
 
         return new ReturnExpression(value);
     }
-
-    // Expression parsing methods
 
     /// <summary>
     /// Разбирает выражение.
@@ -769,7 +763,6 @@ public class Parser
         return new VariableExpression(name);
     }
 
-    // Helper methods
 
     private string ParseIdentifier()
     {

@@ -40,14 +40,12 @@ public class AstEvaluator(Context context, IEnvironment environment) : IAstVisit
     public void Execute(AstNode node)
     {
         node.Accept(this);
-        // Statements may leave values on stack, clean them up
         if (_values.Count > 0)
         {
             _values.Pop();
         }
     }
 
-    // Expressions
     public void Visit(BinaryOperationExpression e)
     {
         e.Left.Accept(this);
@@ -125,7 +123,6 @@ public class AstEvaluator(Context context, IEnvironment environment) : IAstVisit
         switch (e.Operation)
         {
             case UnaryOperation.Plus:
-                // Unary plus doesn't change value
                 break;
             case UnaryOperation.Minus:
                 _values.Push(-_values.Pop());
@@ -446,7 +443,6 @@ public class AstEvaluator(Context context, IEnvironment environment) : IAstVisit
         throw new ReturnException(returnValue);
     }
 
-    // Declarations
     public void Visit(VariableDeclaration d)
     {
         double value = 0;

@@ -5,7 +5,6 @@ namespace Ast;
 
 public interface IAstVisitor
 {
-    // Expressions
     public void Visit(BinaryOperationExpression e);
 
     public void Visit(UnaryOperationExpression e);
@@ -38,7 +37,6 @@ public interface IAstVisitor
 
     public void Visit(ReturnExpression e);
 
-    // Declarations
     public void Visit(VariableDeclaration d);
 
     public void Visit(ConstantDeclaration d);
