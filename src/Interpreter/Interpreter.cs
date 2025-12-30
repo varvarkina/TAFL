@@ -1,5 +1,4 @@
 using Execution;
-using Parser;
 
 namespace Interpreter;
 

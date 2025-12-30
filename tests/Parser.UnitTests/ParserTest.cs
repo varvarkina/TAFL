@@ -1,6 +1,4 @@
 using Execution;
-using Parser;
-using Xunit;
 
 namespace Parser.UnitTests;
 

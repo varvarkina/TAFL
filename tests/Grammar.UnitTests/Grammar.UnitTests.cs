@@ -1,6 +1,3 @@
-using Grammar;
-using Xunit;
-
 namespace Grammar.UnitTests;
 
 public sealed class GrammarValidatorTests

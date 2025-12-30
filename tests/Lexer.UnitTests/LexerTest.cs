@@ -1,6 +1,4 @@
-﻿using Lexer;
-
-namespace Lexer.UnitTests;
+﻿namespace Lexer.UnitTests;
 
 public class LexerTest
 {

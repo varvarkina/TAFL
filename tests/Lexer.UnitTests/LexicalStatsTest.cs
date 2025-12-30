@@ -1,5 +1,3 @@
-using Lexer;
-
 namespace Lexer.UnitTests;
 
 public class LexicalStatsTest
