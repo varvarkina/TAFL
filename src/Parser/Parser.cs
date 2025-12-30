@@ -713,11 +713,6 @@ public class Parser
                 double value = Convert.ToDouble(token.Value!.ToDecimal());
                 return new LiteralExpression(value);
 
-            case TokenType.StringLiteral:
-                _tokens.Advance();
-                // В DEA строки не поддерживаются как литералы в выражениях, только числа
-                throw new UnexpectedLexemeException("number or identifier", token);
-
             case TokenType.Identifier:
                 return ParseFunctionCallOrIdentifier();
 
